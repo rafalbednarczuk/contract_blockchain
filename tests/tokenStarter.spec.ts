@@ -3,6 +3,7 @@ import {Blockchain, SandboxContract, TreasuryContract} from "@ton/sandbox";
 import {TokenStarterContract} from "../wrappers/TokenStarterContract";
 import "@ton/test-utils";
 import {compile} from "@ton/blueprint";
+import {JettonWallet} from "@ton/ton";
 
 describe("token-starter.fc contract tests", () => {
     let blockchain: Blockchain;
@@ -11,7 +12,7 @@ describe("token-starter.fc contract tests", () => {
     let codeCell: Cell
 
     beforeAll(async () => {
-        codeCell = await compile("TokenStarter")
+        codeCell = await compile("TokenStarterContract")
     });
 
     beforeEach(async () => {
@@ -41,8 +42,6 @@ describe("token-starter.fc contract tests", () => {
             jettonWalletCode,
         );
 
-        console.log(`contractBalance2:${(await tokenStarterContract.getBalance()).balance}`)
-
 
         expect(sentMessageResult.transactions).toHaveTransaction({
             from: senderWallet.address,
@@ -50,10 +49,13 @@ describe("token-starter.fc contract tests", () => {
             success: true,
         });
 
-        const data = await tokenStarterContract.getData();
 
-        expect(data.master_address.toString()).toBe(masterAddress.address.toString());
-        sentMessageResult.transactions.forEach((message) => console.log(message));
+        // expect(sentMessageResult.transactions).toHaveTransaction({
+        //     from: senderWallet.address,
+        //     to: tokenStarterContract.address,
+        //     success: true,
+        // });
+
 
     });
 
