@@ -45,19 +45,25 @@ slice load_data() inline {
     if (op == 1) {
 
         ;; TODO: Calculate if there is enough gas + like $1 to launch a coin
+        slice to_address = in_msg_body~load_msg_addr();
+        int ton_amount = in_msg_body~load_coins();
         cell jetton_wallet_code = in_msg_body~load_ref();
-        cell state_init = calculate_jetton_wallet_state_init(sender_address, master_address, jetton_wallet_code);
-        slice to_wallet_address = calculate_jetton_wallet_address(state_init);
+        cell master_msg = in_msg_body~load_ref();
 
-        var msg = begin_cell()
+        cell state_init = calculate_jetton_wallet_state_init(to_address, master_address, jetton_wallet_code);
+        slice to_wallet_address = calculate_jetton_wallet_address(state_init);
+        cell msg = begin_cell()
             .store_uint(0x18, 6)
             .store_slice(to_wallet_address)
-            .store_coins(0)
-            .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-            .store_ref(state_init);
-
-        send_raw_message(msg.end_cell(), 1);
-
+            .store_coins(ton_amount)
+            .store_uint(4 + 2 + 1, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+            ;; .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+            .store_ref(state_init)
+            .store_ref(master_msg)
+            .end_cell();
+            send_raw_message(msg, 1);
+        ~dump(456);
+        ~dump("sent");
         return ();
     }
 
@@ -75,5 +81,9 @@ slice get_contract_storage_data() method_id {
 int balance() method_id {
     var [balance, _] = get_balance();
     return balance;
+}
+
+slice get_wallet_address(slice owner_address, cell jetton_wallet_code) method_id {
+    return calculate_user_jetton_wallet_address(owner_address, my_address(), jetton_wallet_code);
 }
 

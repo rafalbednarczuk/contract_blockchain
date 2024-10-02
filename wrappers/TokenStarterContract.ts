@@ -7,8 +7,9 @@ import {
     contractAddress,
     ContractProvider,
     Sender,
-    SendMode,
+    SendMode, toNano,
 } from "@ton/core";
+import {Op} from "./JettonConstants";
 
 export type StarterContractConfig = {
     masterAddress: Address;
@@ -36,6 +37,7 @@ export class TokenStarterContract implements Contract {
         return new TokenStarterContract(address, init);
     }
 
+
     async sendDeploy(
         provider: ContractProvider,
         sender: Sender,
@@ -52,10 +54,30 @@ export class TokenStarterContract implements Contract {
     async sendCreateToken(
         provider: ContractProvider,
         sender: Sender,
-        value: bigint,
+        to: Address,
+        jetton_amount: bigint,
+        forward_ton_amount: bigint,
+        total_ton_amount: bigint,
         jettonWalletCode: Cell,
+        value: bigint,
     ) {
-        const msg_body = beginCell().storeUint(1, 32).storeRef(jettonWalletCode).endCell();
+        const mintMsg = beginCell().storeUint(Op.internal_transfer, 32)
+            .storeUint(0, 64)
+            .storeCoins(jetton_amount)
+            .storeAddress(null)
+            .storeAddress(this.address) // Response addr
+            .storeCoins(forward_ton_amount)
+            .storeMaybeRef(null)
+            .endCell();
+
+        const msg_body = beginCell()
+            .storeUint(1, 32)
+            .storeAddress(to)
+            .storeCoins(total_ton_amount)
+            .storeRef(jettonWalletCode)
+            .storeRef(mintMsg)
+            .endCell();
+
         await provider.internal(sender, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
@@ -63,6 +85,18 @@ export class TokenStarterContract implements Contract {
         });
     }
 
+    async getWalletAddress(provider: ContractProvider, owner: Address, jettonWalletCode: Cell): Promise<Address> {
+        const res = await provider.get('get_wallet_address', [{
+            type: 'slice',
+            cell: beginCell().storeAddress(owner).endCell()
+        },
+            {
+                type: 'cell',
+                cell: jettonWalletCode
+            },
+        ])
+        return res.stack.readAddress()
+    }
 
     async getData(provider: ContractProvider) {
         const {stack} = await provider.get("get_contract_storage_data", []);
@@ -77,4 +111,6 @@ export class TokenStarterContract implements Contract {
             balance: stack.readNumber(),
         };
     }
+
+
 }

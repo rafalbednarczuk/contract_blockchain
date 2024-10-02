@@ -10,7 +10,7 @@ export async function run(provider: NetworkProvider) {
         {
             masterAddress: masterAddress,
         },
-        await compile("MainContract")
+        await compile("TokenStarterContract")
     );
 
     const openedContract = provider.open(myContract);
