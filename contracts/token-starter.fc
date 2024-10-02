@@ -62,8 +62,6 @@ slice load_data() inline {
             .store_ref(master_msg)
             .end_cell();
             send_raw_message(msg, 1);
-        ~dump(456);
-        ~dump("sent");
         return ();
     }
 

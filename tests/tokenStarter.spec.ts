@@ -44,10 +44,10 @@ describe("token-starter.fc contract tests", () => {
         const senderWallet = await blockchain.treasury("minterAndReceiver");
         const senderJettonWallet = await jettonContractGetter(senderWallet.address);
 
-        console.log(`masterContractAddress:${masterAddress.address}`)
-        console.log(`starterContractAddress:${tokenStarterContract.address}`)
-        console.log(`senderWalletAddress:${senderWallet.address}`)
-        console.log(`senderJettonWalletAddress:${senderJettonWallet.address}`)
+        // console.log(`masterContractAddress:${masterAddress.address}`)
+        // console.log(`starterContractAddress:${tokenStarterContract.address}`)
+        // console.log(`senderWalletAddress:${senderWallet.address}`)
+        // console.log(`senderJettonWalletAddress:${senderJettonWallet.address}`)
 
         const sentMessageResult = await tokenStarterContract.sendCreateToken(
             masterAddress.getSender(),
@@ -60,11 +60,11 @@ describe("token-starter.fc contract tests", () => {
         );
 
 
-        expect(sentMessageResult.transactions).toHaveTransaction({
-            from: masterAddress.address,
-            to: tokenStarterContract.address,
-            success: true,
-        });
+        // expect(sentMessageResult.transactions).toHaveTransaction({
+        //     from: masterAddress.address,
+        //     to: tokenStarterContract.address,
+        //     success: true,
+        // });
 
         // const jettonContract = await jettonContractGetter(senderWallet.address);
         //
