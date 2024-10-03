@@ -18,7 +18,7 @@ export async function run(provider: NetworkProvider) {
     console.log(`contractAddress:${openedContract.address}`);
 
 
-    const jettonWalletCode = await compile("JettonWalletContract");
+    const jettonWalletCode = await compile("JettonWallet");
     const createTokenRequest = await openedContract.sendCreateToken(
         provider.sender(),
         receiverAddress,

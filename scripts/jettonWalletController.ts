@@ -3,11 +3,10 @@ import {compile, sleep, NetworkProvider, UIProvider} from '@ton/blueprint';
 import {JettonWallet} from '../wrappers/JettonWallet';
 import {promptBool, promptAmount, promptAddress, displayContentCell, waitForTransaction} from '../wrappers/ui-utils';
 import {TonClient} from "@ton/ton";
-import {JettonWalletContract} from "../wrappers/JettonWalletContract";
 
 let jetonWalletContract: OpenedContract<JettonWallet>;
 
-const ownerActions = ['Send Jettons'];
+const actions = ['Send Jettons', 'Sell Jettons'];
 
 
 const failedTransMessage = (ui: UIProvider) => {
@@ -15,19 +14,22 @@ const failedTransMessage = (ui: UIProvider) => {
 
 };
 
-const sendJettons = async (provider: NetworkProvider, ui: UIProvider) => {
+const sendJettons = async (provider: NetworkProvider, ui: UIProvider, providedReceiverAddress: Address | null) => {
     const sender = provider.sender();
     let retry: boolean;
-    let receiverAddress: Address;
+    let receiverAddress: Address | null = providedReceiverAddress;
     let jettonAmount: string;
 
     do {
         retry = false;
-        receiverAddress = await promptAddress(`Please specify jetton owner receiver address`, ui);
+        if (receiverAddress == null) {
+            receiverAddress = await promptAddress(`Please specify jetton owner receiver address`, ui);
+        }
         jettonAmount = await promptAmount('Please provide jetton amount in decimal form:', ui);
         ui.write(`Send ${jettonAmount} tokens to ${receiverAddress}\n`);
         retry = !(await promptBool('Is it ok?(yes/no)', ['yes', 'no'], ui));
-    } while (retry);
+    }
+    while (retry) ;
 
     ui.write(`Sending ${jettonAmount} to ${receiverAddress}\n`);
     const curState = await (provider.api() as TonClient).getContractState(jetonWalletContract.address);
@@ -41,7 +43,9 @@ const sendJettons = async (provider: NetworkProvider, ui: UIProvider) => {
         receiverAddress,
         sender.address!!,
         beginCell().endCell(),
-        1n,
+        //Forward amount have to be higher than 1 nano TON, otherwise the message isn't going to be delivered as no gas
+        //Otherwise. Skipped: true, Skip reason: cskip_no_gas
+        toNano("0.03"),
         beginCell().endCell(),
     );
     const gotTrans = await waitForTransaction(provider,
@@ -55,7 +59,7 @@ export async function run(provider: NetworkProvider) {
     const sender = provider.sender();
     const hasSender = sender.address !== undefined;
     const api = provider.api()
-    const minterCode = await compile('JettonWalletContract');
+    const jettonCode = await compile('JettonWallet');
     let done = false;
     let retry: boolean;
     let jettonWalletAddress: Address;
@@ -69,7 +73,7 @@ export async function run(provider: NetworkProvider) {
             ui.write("This contract is not active!\nPlease use another address, or deploy it firs");
         } else {
             const stateCode = Cell.fromBoc(contractState.code)[0];
-            if (!stateCode.equals(minterCode)) {
+            if (!stateCode.equals(jettonCode)) {
                 ui.write("Contract code differs from the current contract version!\n");
                 const resp = await ui.choose("Use address anyway", ["Yes", "No"], (c) => c);
                 retry = resp == "No";
@@ -77,15 +81,17 @@ export async function run(provider: NetworkProvider) {
         }
     } while (retry);
 
-    jetonWalletContract = provider.open(JettonWalletContract.createFromAddress(jettonWalletAddress));
-    let actionList: string[];
-    actionList = ownerActions;
+    jetonWalletContract = provider.open(JettonWallet.createFromAddress(jettonWalletAddress));
+    const minterAddress = await jetonWalletContract.getJettonMasterAddress();
 
     do {
-        const action = await ui.choose("Pick action:", actionList, (c) => c);
+        const action = await ui.choose("Pick action:", actions, (c) => c);
         switch (action) {
             case 'Send Jettons':
-                await sendJettons(provider, ui);
+                await sendJettons(provider, ui, null);
+                break;
+            case 'Sell Jettons':
+                await sendJettons(provider, ui, minterAddress);
                 break;
         }
     } while (!done);

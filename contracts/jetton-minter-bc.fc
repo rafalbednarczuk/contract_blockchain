@@ -215,6 +215,34 @@ int min_tons_for_storage() asm "10000000 PUSHINT"; ;; 0.01 TON
         return ();
     }
 
+    ;; handle coins sell
+    if (op == op::transfer_notification()) {
+        slice minter_contract_address = my_address();
+        slice minter_contract_jetton_address = calculate_user_jetton_wallet_address(minter_contract_address, minter_contract_address, jetton_wallet_code);
+        ;; accept message only from jetton wallet linked to minter contract
+        throw_unless(801, equal_slice_bits(sender_address, minter_contract_jetton_address));
+        int jettons_amount = in_msg_body~load_coins();
+        slice seller_address = in_msg_body~load_msg_addr();
+        int total_jettons = total_jettons_amount();
+        int tons_to_collect = total_tons_to_collect();
+        ;;//TODO: take into account fees and subtract them
+        int tons_amount = jettons_amount * tons_to_collect / total_jettons;
+        cell msg_body = begin_cell()
+            .store_uint(0, 32)
+            .store_uint(query_id, 64)
+            .end_cell();
+        cell msg = begin_cell()
+            .store_uint(0x18, 6)
+            .store_slice(seller_address)
+            .store_coins(tons_amount)
+            .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 1)
+            .store_ref(msg_body)
+            .end_cell();
+        send_raw_message(msg, 1);
+        return ();
+
+    }
+
     throw(0xffff);
 }
 

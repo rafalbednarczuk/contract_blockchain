@@ -6,7 +6,7 @@ import {TonClient} from "@ton/ton";
 
 let minterBCContract: OpenedContract<JettonMinterBC>;
 
-const userActions = ["Buy"];
+const userActions = ["Buy coins"];
 
 
 const buyCoinsAction = async (provider: NetworkProvider, ui: UIProvider) => {
@@ -35,6 +35,7 @@ const buyCoinsAction = async (provider: NetworkProvider, ui: UIProvider) => {
         curState.lastTransaction.lt,
         10);
 }
+
 
 export async function run(provider: NetworkProvider) {
     const ui = provider.ui();
@@ -68,7 +69,7 @@ export async function run(provider: NetworkProvider) {
     do {
         const action = await ui.choose("Pick action:", userActions, (c) => c);
         switch (action) {
-            case 'Buy':
+            case 'Buy coins':
                 await buyCoinsAction(provider, ui);
                 break;
         }
