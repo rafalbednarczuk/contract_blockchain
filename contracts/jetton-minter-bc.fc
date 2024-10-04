@@ -2,7 +2,7 @@
 
 #include "imports/op-codes.fc";
 #include "imports/stdlib.fc";
-#include "./imports/jetton-utils.fc";
+#include "imports/jetton-utils.fc";
 
 ;; Jettons discoverable smart contract
 
@@ -136,7 +136,7 @@ int min_tons_for_storage() asm "10000000 PUSHINT"; ;; 0.01 TON
         var msg = begin_cell()
             .store_uint(0x18, 6)
             .store_slice(bonding_curve_wallet_address)
-            .store_coins(gas_consumption())
+            .store_coins(0)
             .store_uint(4 + 2 + 1, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 1)
             .store_ref(state_init);
         var msg_body = begin_cell()
@@ -162,7 +162,7 @@ int min_tons_for_storage() asm "10000000 PUSHINT"; ;; 0.01 TON
         ;; by using this instead of fwd_fee
         ;; msg_fwd_fee(to_wallet, msg_body, state_init, 15)
 
-        send_raw_message(msg.end_cell(), 1); ;; revert on errors
+        send_raw_message(msg.end_cell(), 64); ;; revert on errors
 
         return ();
     }

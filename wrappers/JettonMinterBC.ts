@@ -62,11 +62,11 @@ export class JettonMinterBC implements Contract {
     async sendBuy(provider: ContractProvider, via: Sender, value: bigint) {
         //buy_coins OP code
         const body = beginCell()
-            .storeUint(0x23bafc01,32)
-            .storeUint(0,64)
+            .storeUint(0x23bafc01, 32)
+            .storeUint(0, 64)
             .storeAddress(via.address)
             .storeMaybeRef(beginCell().endCell())
-            .storeCoins(1n)
+            .storeCoins(toNano("0.1"))
             .storeMaybeRef(beginCell().endCell())
             .endCell();
         await provider.internal(via, {
