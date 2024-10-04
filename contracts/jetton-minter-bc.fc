@@ -128,11 +128,9 @@ int min_tons_for_storage() asm "10000000 PUSHINT"; ;; 0.01 TON
 
         cell state_init = calculate_jetton_wallet_state_init(to_owner_address, jetton_master_address, jetton_wallet_code);
         slice bonding_curve_wallet_address = calculate_jetton_wallet_address(state_init);
-        slice response_address = in_msg_body~load_msg_addr();
-        cell custom_payload = in_msg_body~load_dict();
-        int forward_ton_amount = in_msg_body~load_coins();
-        throw_unless(708, slice_bits(in_msg_body) >= 1);
-        slice either_forward_payload = in_msg_body;
+        slice minter_address = my_address();
+        cell custom_payload = begin_cell().end_cell();
+        int forward_ton_amount = 0;
         var msg = begin_cell()
             .store_uint(0x18, 6)
             .store_slice(bonding_curve_wallet_address)
@@ -143,11 +141,11 @@ int min_tons_for_storage() asm "10000000 PUSHINT"; ;; 0.01 TON
             .store_uint(op::transfer(), 32)
             .store_uint(query_id, 64)
             .store_coins(jettons_amount)
-            .store_slice(sender_address)
-            .store_slice(response_address)
+            .store_slice(sender_address) ;; ignored as forward == 0, so no forward
+            .store_slice(minter_address) ;; return excess to minter
             .store_dict(custom_payload)
             .store_coins(forward_ton_amount)
-            .store_slice(either_forward_payload)
+            .store_slice(begin_cell().end_cell().begin_parse()) ;; forward payload, ignored as no forward
             .end_cell();
 
         msg = msg.store_ref(msg_body);
