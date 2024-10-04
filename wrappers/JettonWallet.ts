@@ -97,6 +97,29 @@ export class JettonWallet implements Contract {
 
     }
 
+    async sendSellJettons(provider: ContractProvider,
+                          via: Sender,
+                          value: bigint,
+                          jetton_amount: bigint,
+                          minter_address: Address,
+    ) {
+        const body = beginCell().storeUint(0xf8a7ea5, 32).storeUint(0, 64) // op, queryId
+            .storeCoins(jetton_amount)
+            .storeAddress(minter_address) // Minter address
+            .storeAddress(via.address)
+            .storeMaybeRef(beginCell().endCell())
+            .storeCoins(toNano("0.03")) // Have to cover fees to make sure notify is delivered
+            .storeMaybeRef(beginCell().endCell())
+            .endCell();
+        await provider.internal(via, {
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: body,
+            value: value
+        });
+
+    }
+
+
     /*
       burn#595f07bc query_id:uint64 amount:(VarUInteger 16)
                     response_destination:MsgAddress custom_payload:(Maybe ^Cell)

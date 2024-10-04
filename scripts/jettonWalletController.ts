@@ -14,17 +14,15 @@ const failedTransMessage = (ui: UIProvider) => {
 
 };
 
-const sendJettons = async (provider: NetworkProvider, ui: UIProvider, providedReceiverAddress: Address | null) => {
+const sendJettons = async (provider: NetworkProvider, ui: UIProvider) => {
     const sender = provider.sender();
     let retry: boolean;
-    let receiverAddress: Address | null = providedReceiverAddress;
+    let receiverAddress: Address;
     let jettonAmount: string;
 
     do {
         retry = false;
-        if (receiverAddress == null) {
-            receiverAddress = await promptAddress(`Please specify jetton owner receiver address`, ui);
-        }
+        receiverAddress = await promptAddress(`Please specify jetton owner receiver address`, ui);
         jettonAmount = await promptAmount('Please provide jetton amount in decimal form:', ui);
         ui.write(`Send ${jettonAmount} tokens to ${receiverAddress}\n`);
         retry = !(await promptBool('Is it ok?(yes/no)', ['yes', 'no'], ui));
@@ -47,6 +45,38 @@ const sendJettons = async (provider: NetworkProvider, ui: UIProvider, providedRe
         //Otherwise. Skipped: true, Skip reason: cskip_no_gas
         toNano("0.03"),
         beginCell().endCell(),
+    );
+    const gotTrans = await waitForTransaction(provider,
+        jetonWalletContract.address,
+        curState.lastTransaction.lt,
+        10);
+}
+
+const sellJettons = async (provider: NetworkProvider, ui: UIProvider, minterAddress: Address) => {
+    const sender = provider.sender();
+    let retry: boolean;
+    let jettonAmount: string;
+
+    do {
+        retry = false;
+        jettonAmount = await promptAmount('Please provide jetton amount in decimal form:', ui);
+        ui.write(`Send ${jettonAmount} tokens to ${minterAddress}\n`);
+        retry = !(await promptBool('Is it ok?(yes/no)', ['yes', 'no'], ui));
+    }
+    while (retry) ;
+
+    ui.write(`Sending ${jettonAmount} to ${minterAddress}\n`);
+    const curState = await (provider.api() as TonClient).getContractState(jetonWalletContract.address);
+
+    if (curState.lastTransaction === null)
+        throw ("Last transaction can't be null on deployed contract");
+
+
+    const res = await jetonWalletContract.sendSellJettons(
+        sender,
+        toNano("0.1"),
+        toNano(jettonAmount),
+        minterAddress
     );
     const gotTrans = await waitForTransaction(provider,
         jetonWalletContract.address,
@@ -88,10 +118,10 @@ export async function run(provider: NetworkProvider) {
         const action = await ui.choose("Pick action:", actions, (c) => c);
         switch (action) {
             case 'Send Jettons':
-                await sendJettons(provider, ui, null);
+                await sendJettons(provider, ui);
                 break;
             case 'Sell Jettons':
-                await sendJettons(provider, ui, minterAddress);
+                await sellJettons(provider, ui, minterAddress);
                 break;
         }
     } while (!done);

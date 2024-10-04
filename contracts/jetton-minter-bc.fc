@@ -243,7 +243,7 @@ int min_tons_for_storage() asm "10000000 PUSHINT"; ;; 0.01 TON
             .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 1)
             .store_ref(msg_body)
             .end_cell();
-        send_raw_message(msg, 1);
+        send_raw_message(msg, 64);
         return ();
 
     }
