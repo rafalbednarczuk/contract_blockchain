@@ -64,10 +64,10 @@ export class JettonMinterBC implements Contract {
         const body = beginCell()
             .storeUint(0x23bafc01, 32)
             .storeUint(0, 64)
-            .storeAddress(via.address)
-            .storeMaybeRef(beginCell().endCell())
-            .storeCoins(toNano("0.1"))
-            .storeMaybeRef(beginCell().endCell())
+            .storeAddress(this.address) // send excess back to minter
+            .storeMaybeRef(beginCell().endCell()) // no custom payload as no forward message
+            .storeCoins(0) // no forward to not give anything back to buyer
+            .storeMaybeRef(beginCell().endCell()) // it's required
             .endCell();
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
