@@ -134,9 +134,8 @@ int min_tons_for_storage() asm "10000000 PUSHINT"; ;; 0.01 TON
         slice minterAddress = my_address();
         ;; response address is receiving exess and it has to be minter address
         throw_unless(802, equal_slice_bits(response_address, minterAddress));
-        ;; do not forward any ton anywhere, otherwise buyer will get money back
-        ;; there might be a different approach to subtract from buyer
-        throw_unless(803, forward_ton_amount == 0);
+        ;; forward minimum possible to notify wallet
+        throw_unless(803, forward_ton_amount == 1);
         throw_unless(708, slice_bits(in_msg_body) >= 1);
         slice either_forward_payload = in_msg_body;
         var msg = begin_cell()
@@ -247,6 +246,11 @@ int min_tons_for_storage() asm "10000000 PUSHINT"; ;; 0.01 TON
         send_raw_message(msg, 1);
         return ();
 
+    }
+
+    ;;excess when someone sales jettons
+    if (op == op::excesses()) {
+        return ();
     }
 
     throw(0xffff);

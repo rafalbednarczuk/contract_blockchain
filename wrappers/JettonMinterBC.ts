@@ -65,8 +65,8 @@ export class JettonMinterBC implements Contract {
             .storeUint(0x23bafc01, 32)
             .storeUint(0, 64)
             .storeAddress(this.address) // send excess back to minter
-            .storeMaybeRef(beginCell().endCell()) // no custom payload as no forward message
-            .storeCoins(0) // no forward to not give anything back to buyer
+            .storeMaybeRef(beginCell().endCell())
+            .storeCoins(1) // forward only 1 gram not give a lot back to buyer
             .storeMaybeRef(beginCell().endCell()) // it's required
             .endCell();
         await provider.internal(via, {
