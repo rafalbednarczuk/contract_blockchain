@@ -86,7 +86,7 @@ int mint_message_value()  asm "10000000 PUSHINT"; ;; 0.01 TON
     ;;deploy
     if (total_supply == 0) {
         ;;creator coins
-        throw_unless(804, msg_value >= 10 * mint_message_value());
+        throw_unless(804, msg_value > 10 * mint_message_value());
         ;;cover fees, so there is money for user to sell instantly
         int user_coins = msg_value - 5 * mint_message_value();
         purchase_coins_and_save_data(total_supply, admin_address, content, jetton_wallet_code, user_coins, sender_address, 1);
@@ -118,9 +118,11 @@ int mint_message_value()  asm "10000000 PUSHINT"; ;; 0.01 TON
     int query_id = in_msg_body~load_uint(64);
 
     if (op == op::buy_coins()) {
+        ;; fees required to pay for frees and create jetton wallets
+        throw_unless(805, msg_value > minter_buy_and_sell_fees());
+
         int total_jettons = total_jettons_amount();
         int tons_to_collect = total_tons_to_collect();
-        ;;//TODO: take into account fees and subtract them
         int jettons_amount = msg_value * total_jettons / tons_to_collect;
 
         slice to_owner_address = my_address();
