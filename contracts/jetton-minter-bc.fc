@@ -21,7 +21,7 @@ int min_tons_for_storage() asm "10000000 PUSHINT"; ;; 0.01 TON
 
 int minter_buy_and_sell_fees() asm "25000000 PUSHINT"; ;; 0.025 TON
 
-int mint_message_value()  asm "50000000 PUSHINT"; ;; 0.05 TON
+int mint_message_value()  asm "50000000 PUSHINT"; ;; 0.01 TON
 ;; storage scheme
 ;; storage#_ total_supply:Coins admin_address:MsgAddress content:^Cell jetton_wallet_code:^Cell = Storage;
 
