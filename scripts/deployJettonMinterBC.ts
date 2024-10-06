@@ -56,6 +56,6 @@ export async function run(provider: NetworkProvider) {
         await compile('JettonMinterBC'));
 
     const minterContract = provider.open(minter);
-    await minterContract.sendDeploy(sender, toNano("0.05"));
+    await minterContract.sendDeploy(sender, toNano("0.2"));
     await provider.waitForDeploy(minterContract.address, 100);
 }
