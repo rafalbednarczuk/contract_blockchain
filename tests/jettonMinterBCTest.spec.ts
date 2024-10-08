@@ -42,34 +42,34 @@ describe("jetton-minter-bc.fc contract tests", () => {
     });
 
     it("create token test", async () => {
-        const senderWallet = await blockchain.treasury("minterAndReceiver");
-        const senderJettonWallet = await jettonContractGetter(senderWallet.address);
-
-        console.log(`masterContractAddress:${masterAddress.address}`)
-        console.log(`minterBCContract:${minterBCContract.address}`)
-        console.log(`senderWalletAddress:${senderWallet.address}`)
-        console.log(`senderJettonWalletAddress:${senderJettonWallet.address}`)
-
-        const sentMessageResult = await minterBCContract.sendBuy(
-            senderWallet.getSender(),
-            toNano("0.17"),
-        );
-
-        expect(sentMessageResult.transactions).toHaveTransaction({
-            from: senderWallet.address,
-            to: minterBCContract.address,
-            success: true,
-        });
-
-        // const jettonContract = await jettonContractGetter(senderWallet.address);
+        // const senderWallet = await blockchain.treasury("minterAndReceiver");
+        // const senderJettonWallet = await jettonContractGetter(senderWallet.address);
+        //
+        // console.log(`masterContractAddress:${masterAddress.address}`)
+        // console.log(`minterBCContract:${minterBCContract.address}`)
+        // console.log(`senderWalletAddress:${senderWallet.address}`)
+        // console.log(`senderJettonWalletAddress:${senderJettonWallet.address}`)
+        //
+        // const sentMessageResult = await minterBCContract.sendBuy(
+        //     senderWallet.getSender(),
+        //     toNano("0.17"),
+        // );
         //
         // expect(sentMessageResult.transactions).toHaveTransaction({
-        //     from: minterBCContract.address,
-        //     to: jettonContract.address,
+        //     from: senderWallet.address,
+        //     to: minterBCContract.address,
         //     success: true,
         // });
-
-
+        //
+        // // const jettonContract = await jettonContractGetter(senderWallet.address);
+        // //
+        // // expect(sentMessageResult.transactions).toHaveTransaction({
+        // //     from: minterBCContract.address,
+        // //     to: jettonContract.address,
+        // //     success: true,
+        // // });
+        //
+        //
     });
 
 

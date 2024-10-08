@@ -85,11 +85,12 @@ int mint_message_value()  asm "10000000 PUSHINT"; ;; 0.01 TON
 
     ;;deploy
     if (total_supply == 0) {
+        slice creator_address = in_msg_body~load_msg_addr();
         ;;creator coins
         throw_unless(804, msg_value > 10 * mint_message_value());
         ;;cover fees, so there is money for user to sell instantly
         int user_coins = msg_value - 5 * mint_message_value();
-        purchase_coins_and_save_data(total_supply, admin_address, content, jetton_wallet_code, user_coins, sender_address, 1);
+        purchase_coins_and_save_data(total_supply, admin_address, content, jetton_wallet_code, user_coins, creator_address, 1);
         int bonding_curve_coins = total_tons_to_collect() - user_coins;
         slice minter_address = my_address();
         ;;have to load total_supply again so it shows correct supply to ton explorers via get_jetton_data
@@ -263,7 +264,7 @@ int mint_message_value()  asm "10000000 PUSHINT"; ;; 0.01 TON
 
 (int, int, slice, cell, cell) get_jetton_data() method_id {
     (int total_supply, slice admin_address, cell content, cell jetton_wallet_code) = load_data();
-    return (total_supply, -1, admin_address, content, jetton_wallet_code);
+    return (total_supply, 0, admin_address, content, jetton_wallet_code);
 }
 
 slice get_wallet_address(slice owner_address) method_id {
