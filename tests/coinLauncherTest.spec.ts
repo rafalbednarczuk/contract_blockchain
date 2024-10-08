@@ -1,25 +1,29 @@
-import {toNano} from "@ton/core";
+import {Address, Cell, toNano} from "@ton/core";
 import {Blockchain, SandboxContract} from "@ton/sandbox";
 import "@ton/test-utils";
 import {compile} from "@ton/blueprint";
-import {jettonContentToCell} from "../wrappers/JettonMinterBC";
+import {jettonContentToCell, JettonMinterBC} from "../wrappers/JettonMinterBC";
 import {CoinLauncher} from "../wrappers/CoinLauncher";
 
 describe("coin-launcher.fc contract tests", () => {
     let blockchain: Blockchain;
     let coinLauncherContract: SandboxContract<CoinLauncher>;
+    let minter_code: Cell;
+    let wallet_code: Cell;
+    let coin_launcher_code: Cell;
 
     beforeAll(async () => {
         blockchain = await Blockchain.create();
 
-        const minter_code = await compile('JettonMinterBC');
-        const wallet_code = await compile('JettonWallet');
+        minter_code = await compile('JettonMinterBC');
+        wallet_code = await compile('JettonWallet');
+        coin_launcher_code = await compile('CoinLauncher');
 
         coinLauncherContract = blockchain.openContract(CoinLauncher.createFromConfig({
                 minter_code,
                 wallet_code,
             },
-            await compile('CoinLauncher')));
+            coin_launcher_code));
 
         const contractLauncherTreasury = await blockchain.treasury("contractLauncherTreasury");
         await coinLauncherContract.sendDeploy(contractLauncherTreasury.getSender(), toNano(10));
@@ -43,9 +47,22 @@ describe("coin-launcher.fc contract tests", () => {
             content
         );
 
+
+        const minterContract = blockchain.openContract(JettonMinterBC.createFromConfig({
+                admin: senderWallet.address,
+                wallet_code: wallet_code,
+                content: content,
+            },
+            minter_code))
+
+        console.log(`walletAddress:${senderWallet.address}`);
+        console.log(`coinLauncherContractAddress:${coinLauncherContract.address}`);
+        console.log(`minterContractAddress:${minterContract.address}`);
+
+
         expect(results.transactions).toHaveTransaction({
-            from: senderWallet.address,
-            to: coinLauncherContract.address,
+            from: coinLauncherContract.address,
+            to: minterContract.address,
             success: true,
         });
 

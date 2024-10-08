@@ -85,6 +85,7 @@ int mint_message_value()  asm "10000000 PUSHINT"; ;; 0.01 TON
 
     ;;deploy
     if (total_supply == 0) {
+        ;; slice messageCell = in_msg_body~load_ref().begin_parse();
         slice creator_address = in_msg_body~load_msg_addr();
         ;;creator coins
         throw_unless(804, msg_value > 10 * mint_message_value());

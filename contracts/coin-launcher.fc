@@ -16,28 +16,22 @@ int mint_message_value()  asm "10000000 PUSHINT"; ;; 0.01 TON
     );
 }
 
-() save_data(cell minter_code, cell jetton_wallet_code) impure inline {
-    set_data(begin_cell()
-        .store_ref(minter_code)
-        .store_ref(jetton_wallet_code)
-        .end_cell()
-    );
-}
-cell pack_minter_data(cell content, cell jetton_wallet_code) inline {
+
+cell pack_minter_data(cell content, cell jetton_wallet_code, slice admin_address) inline {
     slice zero_address = begin_cell().store_uint(0, 64).end_cell().begin_parse();
     return begin_cell()
         .store_coins(0) ;; initial total_supply
-        .store_slice(zero_address) ;; admin_address
+        .store_slice(admin_address) ;; admin_address
         .store_ref(content) ;; content (metadata link)
         .store_ref(jetton_wallet_code) ;; jetton wallet code
         .end_cell();
 }
 
-cell calculate_minter_state_init(cell jetton_wallet_code, cell minter_code, cell content) inline {
+cell calculate_minter_state_init(cell jetton_wallet_code, cell minter_code, cell content, slice admin_address) inline {
     return begin_cell()
         .store_uint(0, 2)
         .store_dict(minter_code)
-        .store_dict(pack_minter_data(content, jetton_wallet_code))
+        .store_dict(pack_minter_data(content, jetton_wallet_code, admin_address))
         .store_uint(0, 1)
         .end_cell();
 }
@@ -79,16 +73,17 @@ slice calculate_minter_address(cell state_init) inline {
     if (op == 1) {
         throw_unless(806, msg_value > 15 * mint_message_value());
         cell content = in_msg_body~load_ref();
-        cell state_init = calculate_minter_state_init(jetton_wallet_code, minter_code, content);
+        cell creatorAddress = begin_cell().store_slice(sender_address).end_cell();
+        cell state_init = calculate_minter_state_init(jetton_wallet_code, minter_code, content, sender_address);
         slice minter_address = calculate_minter_address(state_init);
         var msg = begin_cell()
             .store_uint(0x18, 6)
             .store_slice(minter_address)
-            .store_coins(0)
-            .store_uint(2, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+            .store_coins(11 * mint_message_value())
+            .store_uint(4 + 2 + 1, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 1)
             .store_ref(state_init)
-            .store_slice(sender_address);
-        send_raw_message(msg.end_cell(), 64);
+            .store_ref(creatorAddress);
+        send_raw_message(msg.end_cell(), 1);
 
         return ();
     }
