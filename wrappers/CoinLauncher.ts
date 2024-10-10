@@ -60,14 +60,14 @@ export class CoinLauncher implements Contract {
     }
 
 
-    async sendLaunchJetton(provider: ContractProvider, via: Sender, content: Cell) {
+    async sendLaunchJetton(provider: ContractProvider, via: Sender, content: Cell, value: bigint) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell()
                 .storeUint(1, 32)
                 .storeRef(content)
                 .endCell(),
-            value: toNano("0.2"),
+            value: value,
         });
     }
 

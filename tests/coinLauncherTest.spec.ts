@@ -44,7 +44,8 @@ describe("coin-launcher.fc contract tests", () => {
 
         const results = await coinLauncherContract.sendLaunchJetton(
             senderWallet.getSender(),
-            content
+            content,
+            toNano(0.2)
         );
 
 
@@ -54,6 +55,8 @@ describe("coin-launcher.fc contract tests", () => {
                 content: content,
             },
             minter_code))
+
+        minterContract.sendDeploy(senderWallet.getSender(), toNano(1));
 
         console.log(`walletAddress:${senderWallet.address}`);
         console.log(`coinLauncherContractAddress:${coinLauncherContract.address}`);
@@ -65,6 +68,7 @@ describe("coin-launcher.fc contract tests", () => {
             to: minterContract.address,
             success: true,
         });
+
 
         // results.transactions.forEach((t) => {
         //     console.log(t);

@@ -35,7 +35,8 @@ const launchJetton = async (provider: NetworkProvider, ui: UIProvider) => {
     const content = jettonContentToCell({type:1,uri:contentUrl});
 
     const res = await coinLauncherContract.sendLaunchJetton(sender,
-        content
+        content,
+        toNano("0.2")
     );
     const gotTrans = await waitForTransaction(provider,
         coinLauncherContract.address,
