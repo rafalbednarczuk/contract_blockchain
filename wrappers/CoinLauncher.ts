@@ -13,7 +13,6 @@ import {
 } from '@ton/core';
 
 import {Op} from './JettonConstants';
-import {JettonMinterMakerBCContent} from "./JettonMinterMakerBC";
 
 
 export type CoinToLaunchContent = {

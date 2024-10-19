@@ -11,7 +11,7 @@
 ;; ceil(6905000) = 10000000 ~= 0.01 TON
 int provide_address_gas_consumption() asm "10000000 PUSHINT";
 int min_tons_for_storage() asm "10000000 PUSHINT"; ;; 0.01 TON
-int buy_and_sell_fees() asm "10000000 PUSHINT"; ;; 0.03 TON
+int buy_and_sell_fees() asm "10000000 PUSHINT"; ;; 0.1 TON
 
 ;; storage scheme
 ;; storage#_ total_supply:Coins admin_address:MsgAddress content:^Cell jetton_wallet_code:^Cell = Storage;
@@ -74,7 +74,7 @@ int buy_and_sell_fees() asm "10000000 PUSHINT"; ;; 0.03 TON
     (int total_supply, slice admin_address, cell content, cell jetton_wallet_code) = load_data();
 
     if (op == op::buy_coins()) {
-        throw_unless(80, msg_value >= 10 * min_tons_for_storage());
+        throw_unless(80, msg_value >= buy_and_sell_fees() + 2 * min_tons_for_storage());
 
         int jettons_amount = bc::calculate_jetton_amount(total_supply, msg_value);
         cell state_init = calculate_jetton_wallet_state_init(sender_address, my_address(), jetton_wallet_code);
@@ -84,7 +84,7 @@ int buy_and_sell_fees() asm "10000000 PUSHINT"; ;; 0.03 TON
         var msg = begin_cell()
             .store_uint(0x18, 6)
             .store_slice(to_address)
-            .store_coins(5 * min_tons_for_storage())
+            .store_coins(min_tons_for_storage())
             .store_uint(4 + 2 + 1, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 1)
             .store_ref(state_init);
         var msg_body = begin_cell()
@@ -138,7 +138,7 @@ int buy_and_sell_fees() asm "10000000 PUSHINT"; ;; 0.03 TON
                 .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
                 .store_uint(op::excesses(), 32)
                 .store_uint(query_id, 64);
-            send_raw_message(msg.end_cell(), 2 + 64);
+            send_raw_message(msg.end_cell(), 64);
         }
         return ();
     }
