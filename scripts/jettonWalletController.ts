@@ -52,7 +52,7 @@ const sendJettons = async (provider: NetworkProvider, ui: UIProvider) => {
         10);
 }
 
-const sellJettons = async (provider: NetworkProvider, ui: UIProvider, minterAddress: Address) => {
+const sellJettons = async (provider: NetworkProvider, ui: UIProvider) => {
     const sender = provider.sender();
     let retry: boolean;
     let jettonAmount: string;
@@ -60,23 +60,24 @@ const sellJettons = async (provider: NetworkProvider, ui: UIProvider, minterAddr
     do {
         retry = false;
         jettonAmount = await promptAmount('Please provide jetton amount in decimal form:', ui);
-        ui.write(`Send ${jettonAmount} tokens to ${minterAddress}\n`);
+        ui.write(`Burn/Sell ${jettonAmount} tokens \n`);
         retry = !(await promptBool('Is it ok?(yes/no)', ['yes', 'no'], ui));
     }
     while (retry) ;
 
-    ui.write(`Sending ${jettonAmount} to ${minterAddress}\n`);
+    ui.write(`Burning/Sending ${jettonAmount} \n`);
     const curState = await (provider.api() as TonClient).getContractState(jetonWalletContract.address);
 
     if (curState.lastTransaction === null)
         throw ("Last transaction can't be null on deployed contract");
 
 
-    const res = await jetonWalletContract.sendSellJettons(
+    const res = await jetonWalletContract.sendBurn(
         sender,
         toNano("0.1"),
         toNano(jettonAmount),
-        minterAddress
+        sender.address!,
+        beginCell().endCell(),
     );
     const gotTrans = await waitForTransaction(provider,
         jetonWalletContract.address,
@@ -112,7 +113,6 @@ export async function run(provider: NetworkProvider) {
     } while (retry);
 
     jetonWalletContract = provider.open(JettonWallet.createFromAddress(jettonWalletAddress));
-    const minterAddress = await jetonWalletContract.getJettonMasterAddress();
 
     do {
         const action = await ui.choose("Pick action:", actions, (c) => c);
@@ -121,7 +121,7 @@ export async function run(provider: NetworkProvider) {
                 await sendJettons(provider, ui);
                 break;
             case 'Sell Jettons':
-                await sellJettons(provider, ui, minterAddress);
+                await sellJettons(provider, ui);
                 break;
         }
     } while (!done);
