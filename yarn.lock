@@ -839,7 +839,7 @@
   dependencies:
     node-fetch "^2.6.9"
 
-"@tonconnect/protocol@^2.2.5":
+"@tonconnect/protocol@^2.2.5", "@tonconnect/protocol@^2.2.6":
   version "2.2.6"
   resolved "https://registry.yarnpkg.com/@tonconnect/protocol/-/protocol-2.2.6.tgz#24b3fbcde6003e65fb5840a190072db5378699db"
   integrity sha512-kyoDz5EqgsycYP+A+JbVsAUYHNT059BCrK+m0pqxykMODwpziuSAXfwAZmHcg8v7NB9VKYbdFY55xKeXOuEd0w==

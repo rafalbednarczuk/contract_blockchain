@@ -1,0 +1,24 @@
+#include "imports/stdlib.fc";
+#include "imports/bonding-curve-utils.fc";
+
+() recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+    ~dump(100);
+    ~dump(101);
+
+    slice cs = in_msg_full.begin_parse();
+    int flags = cs~load_uint(4);
+    if (flags & 1) {
+        return ();
+    }
+    ~dump(102);
+
+    int volume = bc::calculate_volume_in_grams(1000000 * one_jetton());
+    ~dump(volume);
+    ~dump(103);
+    int ton_amount = bc::calculate_ton_amount(1000000 / 2 * one_jetton(), 1000000 * one_jetton());
+    ~dump(ton_amount);
+    ~dump(104);
+    int calculated_jettons = bc::calculate_jetton_amount(500000 * one_jetton(), 2000 * one_ton());
+    ~dump(calculated_jettons);
+    return ();
+}

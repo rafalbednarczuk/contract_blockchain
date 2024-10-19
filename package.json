@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@orbs-network/ton-access": "^2.3.3",
+    "@tonconnect/protocol": "^2.2.6",
     "dotenv": "^16.4.5"
   }
 }

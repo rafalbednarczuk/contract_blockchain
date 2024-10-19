@@ -73,12 +73,13 @@ export class JettonWallet implements Contract {
             .endCell();
     }
 
-    async sendTransfer(provider: ContractProvider, via: Sender,
+    async sendTransfer(provider: ContractProvider,
+                       via: Sender,
                        value: bigint,
                        jetton_amount: bigint,
                        to: Address,
-                       responseAddress: Address,
-                       customPayload: Cell,
+                       responseAddress: Address | null,
+                       customPayload: Cell | null,
                        forward_ton_amount: bigint,
                        forwardPayload: Cell) {
         const body = beginCell().storeUint(0xf8a7ea5, 32).storeUint(0, 64) // op, queryId
