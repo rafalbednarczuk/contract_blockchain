@@ -11,7 +11,7 @@ export async function run(provider: NetworkProvider) {
     const minterCode = await compile('JettonMinterMarket');
     const walletCode = await compile('JettonWallet');
 
-    const contentUrl = "https://gist.githubusercontent.com/rafalbednarczuk/988b9cde29434b9ae055e651d350e217/raw/f96c3964b4312803504c54bc8d76efc9163e8283/gistfile1.txt";
+    const contentUrl = "https://gist.githubusercontent.com/rafalbednarczuk/4cf2456db6429dcb0bb098a2d2492e8a/raw/697582e6d9b1a7fe52ba9440f6e0adf2916531b3/gistfile1.txt";
     const content = jettonContentToCell({type: 1, uri: contentUrl});
 
     const jettonMinterMaker = JettonMinterMarket.createFromConfig({
