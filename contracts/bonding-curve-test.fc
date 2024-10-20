@@ -1,6 +1,49 @@
 #include "imports/stdlib.fc";
 #include "imports/bonding-curve-utils.fc";
 
+
+int math::sqrt(int x) {
+    if (x == 0) {
+        return 0;
+    }
+    int z = (x + 1) / 2;
+    int y = x;
+    while (z < y) {
+        y = z;
+        z = (x / z + z) / 2;
+    }
+    return y;
+}
+
+int calculate_jetton_amount_from_zero(int ton_amount_nano) {
+    int jetton = one_jetton();
+
+    ;; Constants for the quadratic equation: aJ^2 + bJ + c = 0
+    ;; where J is the number of jettons to be purchased
+    int a = 3; ;; 2 * 1.5e-9 * 10^9 (scaled up by 10^9)
+    int b = 1000000; ;; 0.0005 * 2 * 10^9 (scaled up by 10^9)
+    int c = -2 * ton_amount_nano; ;; -2 * V (negative because we moved it to the other side of the equation)
+
+    ;; Calculate discriminant
+    int discriminant = b * b - 4 * a * c;
+
+    ;; Calculate square root of discriminant
+    int sqrt_disc = math::sqrt(discriminant);
+
+    ;; Calculate final result: (-b + sqrt(discriminant)) / (2a)
+    ;; We multiply by 10^9 before division to maintain precision
+    int result = ((-1 * b + sqrt_disc) * jetton) / (2 * a);
+
+    return result;
+}
+
+
+int calculate_jetton_amount(int total_jettons_sold_nano, int ton_amount_nano) {
+    int total_grams_sold = bc::calculate_volume_in_grams(total_jettons_sold_nano);
+    int jettons_to_end = calculate_jetton_amount_from_zero(total_grams_sold + ton_amount_nano);
+    return jettons_to_end - total_jettons_sold_nano;
+}
+
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
     ~dump(100);
     ~dump(101);
@@ -10,15 +53,18 @@
     if (flags & 1) {
         return ();
     }
-    ~dump(102);
 
-    int volume = bc::calculate_volume_in_grams(1000000 * one_jetton());
+    ~dump(200);
+
+    int ton_amount = 2000 * one_ton();
+    int jetton_amount_from_zero = calculate_jetton_amount_from_zero(ton_amount);
+    ~dump(jetton_amount_from_zero);
+    ~dump(201);
+    int volume = bc::calculate_volume_in_grams(jetton_amount_from_zero);
     ~dump(volume);
-    ~dump(103);
-    int ton_amount = bc::calculate_ton_amount(1000000 / 2 * one_jetton(), 1000000 * one_jetton());
-    ~dump(ton_amount);
-    ~dump(104);
-    int calculated_jettons = bc::calculate_jetton_amount(500000 * one_jetton(), 2000 * one_ton());
-    ~dump(calculated_jettons);
+
+
+
+
     return ();
 }

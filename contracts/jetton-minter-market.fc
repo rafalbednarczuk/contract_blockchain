@@ -84,7 +84,7 @@ int buy_and_sell_fees() asm "10000000 PUSHINT"; ;; 0.1 TON
         var msg = begin_cell()
             .store_uint(0x18, 6)
             .store_slice(to_address)
-            .store_coins(min_tons_for_storage())
+            .store_coins(5 * min_tons_for_storage())
             .store_uint(4 + 2 + 1, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 1)
             .store_ref(state_init);
         var msg_body = begin_cell()

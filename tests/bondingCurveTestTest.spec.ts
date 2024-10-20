@@ -2,8 +2,6 @@ import {Address, Cell, toNano} from "@ton/core";
 import {Blockchain, SandboxContract} from "@ton/sandbox";
 import "@ton/test-utils";
 import {compile} from "@ton/blueprint";
-import {jettonContentToCell, JettonMinterBC} from "../wrappers/JettonMinterBC";
-import {CoinLauncher} from "../wrappers/CoinLauncher";
 import {BondingCurveTest} from "../wrappers/BondingCurveTest";
 
 describe("bonding-curve-test.fc contract tests", () => {
