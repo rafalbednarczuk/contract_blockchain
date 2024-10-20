@@ -76,7 +76,7 @@ int buy_and_sell_fees() asm "10000000 PUSHINT"; ;; 0.1 TON
     if (op == op::buy_coins()) {
         throw_unless(80, msg_value >= buy_and_sell_fees() + 2 * min_tons_for_storage());
 
-        int jettons_amount = bc::calculate_jetton_amount(total_supply, msg_value);
+        int jettons_amount = bc::calculate_bought_jetton_amount_for_ton(total_supply, msg_value);
         cell state_init = calculate_jetton_wallet_state_init(sender_address, my_address(), jetton_wallet_code);
         slice to_address = calculate_jetton_wallet_address(state_init);
 
@@ -127,9 +127,8 @@ int buy_and_sell_fees() asm "10000000 PUSHINT"; ;; 0.1 TON
         );
         save_data(total_supply - jettons_amount, admin_address, content, jetton_wallet_code);
         slice response_address = in_msg_body~load_msg_addr();
-        int total_jettons_sold = total_supply - jettons_amount;
-        int ton_amount = bc::calculate_ton_amount(total_jettons_sold, jettons_amount);
-        int ton_amount_minus_fees = (ton_amount - buy_and_sell_fees()) * 100 / 99;
+        int ton_amount = bc::calculate_ton_amount_for_sold_jetton(total_supply, jettons_amount);
+        int ton_amount_minus_fees = (ton_amount - buy_and_sell_fees()) * 99 / 100;
         if (response_address.preload_uint(2) != 0) {
             var msg = begin_cell()
                 .store_uint(0x10, 6) ;; nobounce - int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool src:MsgAddress -> 011000

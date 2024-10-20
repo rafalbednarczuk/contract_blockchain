@@ -9,39 +9,64 @@
 int one_ton() asm "1000000000 PUSHINT";
 int one_jetton() asm "1000000000 PUSHINT";
 
+int math::sqrt(int x) {
+    if (x == 0) {
+        return 0;
+    }
+    int z = (x + 1) / 2;
+    int y = x;
+    while (z < y) {
+        y = z;
+        z = (x / z + z) / 2;
+    }
+    return y;
+}
+
+
 int bc::calculate_price_in_grams_for_jetton(int jettons_nano) {
     int ton = one_ton();
-    return ton / 2000 + jettons_nano / 333333333;
+    return ton / 2000 + jettons_nano * one_jetton() / 333333333333333333;
 }
 
+;; V(J) = 0.0005J * 1T + 0.5J * [f(J) - 0.0005]
 int bc::calculate_volume_in_grams(int jettons_nano) {
     int ton = one_ton();
-    return ton / 2000 * jettons_nano / one_jetton() + jettons_nano * (bc::calculate_price_in_grams_for_jetton(jettons_nano) - ton / 2000) / 2 / one_jetton();
+    return jettons_nano / 2000 + jettons_nano * (bc::calculate_price_in_grams_for_jetton(jettons_nano) - ton / 2000) / 2 / one_jetton();
 }
 
-int bc::calculate_ton_amount(int total_jettons_sold_nano, int jettons_amount_nano) {
-    int start_volume = bc::calculate_volume_in_grams(total_jettons_sold_nano);
-    int end_volume = bc::calculate_volume_in_grams(total_jettons_sold_nano + jettons_amount_nano);
-    return end_volume - start_volume;
+int bc::calculate_jetton_amount_from_zero(int ton_amount_nano) {
+    int jetton = one_jetton();
+
+    ;; Constants for the quadratic equation: aJ^2 + bJ + c = 0
+    ;; where J is the number of jettons to be purchased
+    int a = 3; ;; 2 * 1.5e-9 * 10^9 (scaled up by 10^9)
+    int b = 1000000; ;; 0.0005 * 2 * 10^9 (scaled up by 10^9)
+    int c = -2 * ton_amount_nano; ;; -2 * V (negative because we moved it to the other side of the equation)
+
+    ;; Calculate discriminant
+    int discriminant = b * b - 4 * a * c;
+
+    ;; Calculate square root of discriminant
+    int sqrt_disc = math::sqrt(discriminant);
+
+    ;; Calculate final result: (-b + sqrt(discriminant)) / (2a)
+    ;; We multiply by 10^9 before division to maintain precision
+    int result = ((-1 * b + sqrt_disc) * jetton) / (2 * a);
+
+    return result;
 }
 
-;; max 1B JETTON
-int bc::calculate_jetton_amount(int total_jettons_sold_nano, int ton_amount_nano) {
-    int ton = one_ton();
-    int low = total_jettons_sold_nano;
-    int high = total_jettons_sold_nano + ton * 1000000000;
 
-    while (low < high) {
-        int mid = (low + high + 1) / 2;
-        int mid_ton_amount = bc::calculate_ton_amount(total_jettons_sold_nano, mid);
+int bc::calculate_bought_jetton_amount_for_ton(int total_jettons_sold_nano, int ton_amount_nano) {
+    int total_grams_sold = bc::calculate_volume_in_grams(total_jettons_sold_nano);
+    int jettons_to_end = bc::calculate_jetton_amount_from_zero(total_grams_sold + ton_amount_nano);
+    return jettons_to_end - total_jettons_sold_nano;
+}
 
-        if (mid_ton_amount <= ton_amount_nano) {
-            low = mid;
-        } else {
-            high = mid - 1;
-        }
-    }
-    return low;
+int bc::calculate_ton_amount_for_sold_jetton(int total_jettons_sold_nano, int jettons_amount_nano) {
+    int current_volume = bc::calculate_volume_in_grams(total_jettons_sold_nano);
+    int volume_after_sell = bc::calculate_volume_in_grams(total_jettons_sold_nano - jettons_amount_nano);
+    return current_volume - volume_after_sell;
 }
 
 int math::cbrt(int x) {

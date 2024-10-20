@@ -2,6 +2,12 @@
 #include "imports/bonding-curve-utils.fc";
 
 
+;; f(J) = 0.0005T +  0.000000003 * J * 1T ;; T == 1 TON; J == 1 Jetton
+;; At 1 Million Jettons, Total is 2000 TON.
+;; Starting pirce is 0.0005T/Jetton, 1 Million Jetton price is 0.0035T/Jetton
+;; V(J) = 0.0005J * 1T + 0.5J * [f(J) - 0.0005]
+;; V stands for ton amount bought from 0 to J including.
+
 int math::sqrt(int x) {
     if (x == 0) {
         return 0;
@@ -15,34 +21,6 @@ int math::sqrt(int x) {
     return y;
 }
 
-int calculate_jetton_amount_from_zero(int ton_amount_nano) {
-    int jetton = one_jetton();
-
-    ;; Constants for the quadratic equation: aJ^2 + bJ + c = 0
-    ;; where J is the number of jettons to be purchased
-    int a = 3; ;; 2 * 1.5e-9 * 10^9 (scaled up by 10^9)
-    int b = 1000000; ;; 0.0005 * 2 * 10^9 (scaled up by 10^9)
-    int c = -2 * ton_amount_nano; ;; -2 * V (negative because we moved it to the other side of the equation)
-
-    ;; Calculate discriminant
-    int discriminant = b * b - 4 * a * c;
-
-    ;; Calculate square root of discriminant
-    int sqrt_disc = math::sqrt(discriminant);
-
-    ;; Calculate final result: (-b + sqrt(discriminant)) / (2a)
-    ;; We multiply by 10^9 before division to maintain precision
-    int result = ((-1 * b + sqrt_disc) * jetton) / (2 * a);
-
-    return result;
-}
-
-
-int calculate_jetton_amount(int total_jettons_sold_nano, int ton_amount_nano) {
-    int total_grams_sold = bc::calculate_volume_in_grams(total_jettons_sold_nano);
-    int jettons_to_end = calculate_jetton_amount_from_zero(total_grams_sold + ton_amount_nano);
-    return jettons_to_end - total_jettons_sold_nano;
-}
 
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
     ~dump(100);
@@ -57,14 +35,37 @@ int calculate_jetton_amount(int total_jettons_sold_nano, int ton_amount_nano) {
     ~dump(200);
 
     int ton_amount = 2000 * one_ton();
-    int jetton_amount_from_zero = calculate_jetton_amount_from_zero(ton_amount);
-    ~dump(jetton_amount_from_zero);
+    int price = bc::calculate_price_in_grams_for_jetton(0 * one_jetton());
+    ~dump(price);
+    int price = bc::calculate_price_in_grams_for_jetton(1000000 * one_jetton());
+    ~dump(price);
     ~dump(201);
-    int volume = bc::calculate_volume_in_grams(jetton_amount_from_zero);
+    int volume = bc::calculate_volume_in_grams(0);
     ~dump(volume);
-
-
-
-
+    int volume = bc::calculate_volume_in_grams(500000 * one_jetton());
+    ~dump(volume);
+    int volume = bc::calculate_volume_in_grams(1000000 * one_jetton());
+    ~dump(volume);
+    ~dump(202);
+    int jetton_amount = bc::calculate_jetton_amount_from_zero(0);
+    ~dump(jetton_amount);
+    int jetton_amount = bc::calculate_jetton_amount_from_zero(500 * one_ton());
+    ~dump(jetton_amount);
+    int jetton_amount = bc::calculate_jetton_amount_from_zero(1000 * one_ton());
+    ~dump(jetton_amount);
+    int jetton_amount = bc::calculate_jetton_amount_from_zero(2000 * one_ton());
+    ~dump(jetton_amount);
+    ~dump(203);
+    int jetton_amount = bc::calculate_bought_jetton_amount_for_ton(0, 0 * one_ton());
+    ~dump(jetton_amount);
+    int jetton_amount = bc::calculate_bought_jetton_amount_for_ton(0, 2000 * one_ton());
+    ~dump(jetton_amount);
+    int jetton_amount = bc::calculate_bought_jetton_amount_for_ton(500000 * one_jetton(), 1000 * one_ton());
+    ~dump(jetton_amount);
+    int jetton_amount = bc::calculate_bought_jetton_amount_for_ton(500000 * one_jetton(), 500 * one_ton());
+    ~dump(jetton_amount);
+    ~dump(204);
+    int ton_amount = bc::calculate_ton_amount_for_sold_jetton(jetton_amount + 500000 * one_jetton(), jetton_amount);
+    ~dump(ton_amount);
     return ();
 }
