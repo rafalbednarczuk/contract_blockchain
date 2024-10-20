@@ -8,18 +8,6 @@
 ;; V(J) = 0.0005J * 1T + 0.5J * [f(J) - 0.0005]
 ;; V stands for ton amount bought from 0 to J including.
 
-int math::sqrt(int x) {
-    if (x == 0) {
-        return 0;
-    }
-    int z = (x + 1) / 2;
-    int y = x;
-    while (z < y) {
-        y = z;
-        z = (x / z + z) / 2;
-    }
-    return y;
-}
 
 
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
@@ -47,7 +35,7 @@ int math::sqrt(int x) {
     int volume = bc::calculate_volume_in_grams(1000000 * one_jetton());
     ~dump(volume);
     ~dump(202);
-    int jetton_amount = bc::calculate_jetton_amount_from_zero(0);
+    int jetton_amount = bc::calculate_jetton_amount_from_zero(5 * one_ton() / 10);
     ~dump(jetton_amount);
     int jetton_amount = bc::calculate_jetton_amount_from_zero(500 * one_ton());
     ~dump(jetton_amount);
@@ -62,10 +50,10 @@ int math::sqrt(int x) {
     ~dump(jetton_amount);
     int jetton_amount = bc::calculate_bought_jetton_amount_for_ton(500000 * one_jetton(), 1000 * one_ton());
     ~dump(jetton_amount);
-    int jetton_amount = bc::calculate_bought_jetton_amount_for_ton(500000 * one_jetton(), 500 * one_ton());
+    int jetton_amount = bc::calculate_bought_jetton_amount_for_ton(0, 5 * one_ton() / 10);
     ~dump(jetton_amount);
     ~dump(204);
-    int ton_amount = bc::calculate_ton_amount_for_sold_jetton(jetton_amount + 500000 * one_jetton(), jetton_amount);
+    int ton_amount = bc::calculate_ton_amount_for_sold_jetton(jetton_amount, jetton_amount);
     ~dump(ton_amount);
     return ();
 }

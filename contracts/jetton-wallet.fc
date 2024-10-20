@@ -196,8 +196,11 @@ int gas_consumption() asm "15000000 PUSHINT"; ;; 0.015 TON
         .store_coins(0)
         .store_uint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)
         .store_ref(msg_body);
-
-    send_raw_message(msg.end_cell(), 64);
+    if (balance == 0) {
+        send_raw_message(msg.end_cell(), 128);
+    } else {
+        send_raw_message(msg.end_cell(), 64);
+    }
 
     save_data(balance, owner_address, jetton_master_address, jetton_wallet_code);
 }
