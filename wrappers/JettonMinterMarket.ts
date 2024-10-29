@@ -27,6 +27,7 @@ export function JettonMinterMakerConfigToCell(config: JettonMinterMakerConfig): 
         .storeAddress(config.admin)
         .storeRef(config.content)
         .storeRef(config.wallet_code)
+        .storeCoins(0)
         .endCell();
 }
 
