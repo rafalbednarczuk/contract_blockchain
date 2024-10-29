@@ -9,6 +9,7 @@ int op::burn() asm "0x595f07bc PUSHINT";
 int op::burn_notification() asm "0x7bdd97de PUSHINT";
 int op::buy_coins() asm "0x23bafc01 PUSHINT";
 int op::sell_coins() asm "0x4cfa0ce7 PUSHINT";
+int op::withdraw_fees() asm "0x1f7eabd8 PUSHINT";
 
 ;; Minter
 int op::mint() asm "21 PUSHINT";
