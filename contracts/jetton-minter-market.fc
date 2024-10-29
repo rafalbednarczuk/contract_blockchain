@@ -15,7 +15,7 @@ int buy_fee() asm "15000000 PUSHINT"; ;; 0.1 TON
 int sell_fee() asm "15000000 PUSHINT"; ;; 0.2 TON
 
 
-(int, slice, cell, cell) load_data() inline {
+(int, slice, cell, cell, int) load_data() inline {
     slice ds = get_data().begin_parse();
     return (
         ds~load_coins(), ;; total_supply
