@@ -126,11 +126,11 @@ int sell_fee() asm "15000000 PUSHINT"; ;; 0.2 TON
         throw_unless(74,
             equal_slice_bits(calculate_user_jetton_wallet_address(from_address, my_address(), jetton_wallet_code), sender_address)
         );
-        ;; //TODO: add available fees of 1/100 of that below
-        save_data(total_supply - jettons_amount, admin_address, content, jetton_wallet_code, available_fees);
         slice response_address = in_msg_body~load_msg_addr();
         int ton_amount = bc::calculate_ton_amount_for_sold_jetton(total_supply, jettons_amount);
         int ton_amount_minus_fees = (ton_amount - sell_fee()) * 99 / 100;
+        available_fees = available_fees + (ton_amount - sell_fee()) / 100;
+        save_data(total_supply - jettons_amount, admin_address, content, jetton_wallet_code, available_fees);
         if (response_address.preload_uint(2) != 0) {
             var msg = begin_cell()
                 .store_uint(0x10, 6) ;; nobounce - int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool src:MsgAddress -> 011000
@@ -180,7 +180,17 @@ int sell_fee() asm "15000000 PUSHINT"; ;; 0.2 TON
     }
 
     if (op::withdraw_fees()) {
-        ;; //TODO:
+        throw_unless(73, equal_slice_bits(sender_address, admin_address));
+        slice withdraw_fees_address = in_msg_body~load_msg_addr();
+        var msg = begin_cell()
+            .store_uint(0x10, 6) ;; nobounce - int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool src:MsgAddress -> 011000
+            .store_slice(withdraw_fees_address)
+            .store_coins(available_fees)
+            .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+            .store_uint(op::excesses(), 32)
+            .store_uint(query_id, 64);
+        send_raw_message(msg.end_cell(), 64);
+        save_data(total_supply, admin_address, content, jetton_wallet_code, 0);
     }
 
 

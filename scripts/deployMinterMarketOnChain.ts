@@ -72,22 +72,22 @@ async function createContentCell(): Promise<Cell> {
     const dict = Dictionary.empty(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell());
 
     // Metadata key-value pairs
-    const metadataHappy = {
-        name: "Happy coin2",
+    const metadata = {
+        name: "Happy coin",
         description: description,
-        symbol: "HAPPY2",
+        symbol: "HAPPY",
         decimals: "9",
         image: "https://images.vexels.com/content/263771/preview/happy-coin-retro-cartoon-color-0653ea.png",
         render_type: "currency",   // Added since it's a game
         amount_style: "n"      // Default number style
     };
 
-    const metadata = {
-        name: "Pablocoin HTML",
-        description: description,
-        image: "https://bitcoincash-example.github.io/website/logo.png",
-        symbol: "PbcH",
-    };
+    // const metadata = {
+    //     name: "Pablocoin HTML",
+    //     description: description,
+    //     image: "https://bitcoincash-example.github.io/website/logo.png",
+    //     symbol: "PbcH",
+    // };
 
     // Add each metadata field to dictionary
     for (const [key, value] of Object.entries(metadata)) {
