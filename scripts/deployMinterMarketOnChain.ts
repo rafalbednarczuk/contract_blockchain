@@ -68,16 +68,17 @@ async function createContentCell(): Promise<Cell> {
 </body>
 </html>`;
 
+    const catchCoinGame = "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no\"><style>body{margin:0;overflow:hidden;touch-action:none;font-family:Arial,sans-serif}#game{width:100vw;height:100vh;background:#87CEEB;position:relative;cursor:pointer}#player{width:50px;height:50px;position:absolute;bottom:20px;transform:translate(-50%,0);transition:left .3s ease-out}#player img{width:100%;height:100%;display:block}#coin{width:30px;height:30px;background:#FFD700;border-radius:50%;position:absolute;top:-30px;left:50%}#score{position:absolute;top:20px;right:20px;font-size:24px;color:#fff}#gameOver{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.8);color:#fff;padding:20px;border-radius:10px;text-align:center;display:none}button{background:#4CAF50;border:none;color:#fff;padding:15px 32px;text-align:center;text-decoration:none;display:inline-block;font-size:16px;margin:4px 2px;cursor:pointer;border-radius:4px}#instructions{position:absolute;top:20px;left:20px;color:#fff;font-size:18px}</style></head><body><div id=\"game\"><div id=\"player\"><img src=\"https://appincoin.fun/icon.jpg\" alt=\"player\"></div><div id=\"coin\"></div><div id=\"score\">Score: 0</div><div id=\"instructions\">Click/tap anywhere to move</div><div id=\"gameOver\"><h2>Game Over!</h2><p>Final Score: <span id=\"finalScore\">0</span></p><button onclick=\"resetGame()\">Play Again</button></div></div><script>const game=document.getElementById('game'),player=document.getElementById('player'),coin=document.getElementById('coin'),scoreElement=document.getElementById('score'),gameOverScreen=document.getElementById('gameOver'),finalScoreElement=document.getElementById('finalScore'),PLAYER_WIDTH=50,PLAYER_HEIGHT=50,COIN_SIZE=30;let score=0,playerX=window.innerWidth/2,coinX=Math.random()*(window.innerWidth-COIN_SIZE),coinY=-COIN_SIZE,coinVelocity=2,coinAcceleration=.1,isGameOver=!1;function handleClick(e){if(!isGameOver){const x=e.type.includes('touch')?e.touches[0].clientX:e.clientX;playerX=Math.max(PLAYER_WIDTH/2,Math.min(window.innerWidth-PLAYER_WIDTH/2,x)),player.style.left=playerX+'px'}}function checkCollision(){const playerLeft=playerX-PLAYER_WIDTH/2,playerRight=playerX+PLAYER_WIDTH/2,playerTop=window.innerHeight-PLAYER_HEIGHT-20,playerBottom=window.innerHeight-20,coinCenter=coinX+COIN_SIZE/2,coinTop=coinY,coinBottom=coinY+COIN_SIZE;return Math.abs(coinCenter-(playerLeft+PLAYER_WIDTH/2))<(PLAYER_WIDTH+COIN_SIZE)/2&&!(coinTop>playerBottom||coinBottom<playerTop)}function updateGame(){isGameOver||(coinVelocity+=coinAcceleration,coinY+=coinVelocity,coin.style.top=coinY+'px',coin.style.left=coinX+'px',checkCollision()?(score++,scoreElement.textContent='Score: '+score,resetCoin()):coinY>window.innerHeight&&gameOver(),requestAnimationFrame(updateGame))}function resetCoin(){coinY=-COIN_SIZE,coinX=Math.random()*(window.innerWidth-COIN_SIZE),coinVelocity=2+.2*score,coinAcceleration=.1+.005*score}function gameOver(){isGameOver=!0,gameOverScreen.style.display='block',finalScoreElement.textContent=score}function resetGame(){score=0,coinVelocity=2,coinAcceleration=.1,isGameOver=!1,scoreElement.textContent='Score: 0',gameOverScreen.style.display='none',resetCoin(),playerX=window.innerWidth/2,player.style.left=playerX+'px',updateGame()}game.addEventListener('click',handleClick),game.addEventListener('touchstart',handleClick),game.addEventListener('touchstart',e=>e.preventDefault()),updateGame()</script></body></html>";
     // Create dictionary for metadata
     const dict = Dictionary.empty(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell());
 
     // Metadata key-value pairs
     const metadata = {
-        name: "Happy coin",
-        description: description,
-        symbol: "HAPPY",
+        name: "AppInCoin Genesis",
+        description: catchCoinGame,
+        symbol: "AICG",
         decimals: "9",
-        image: "https://images.vexels.com/content/263771/preview/happy-coin-retro-cartoon-color-0653ea.png",
+        image: "https://appincoin.fun/icon.jpg",
         render_type: "currency",   // Added since it's a game
         amount_style: "n"      // Default number style
     };
