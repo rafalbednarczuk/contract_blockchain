@@ -27,7 +27,6 @@ export function JettonMinterMakerConfigToCell(config: JettonMinterMakerConfig): 
         .storeAddress(config.admin)
         .storeRef(config.content)
         .storeRef(config.wallet_code)
-        .storeCoins(0)
         .endCell();
 }
 
@@ -65,7 +64,7 @@ export class JettonMinterMarket implements Contract {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell()
-                .storeUint(0x23bafc01, 32)
+                .storeUint(Op.buy_coins, 32)
                 .storeUint(query_id, 64)
                 .endCell(),
         });
@@ -88,7 +87,8 @@ export class JettonMinterMarket implements Contract {
     }
 
     static mintMessage(from: Address, to: Address, jetton_amount: bigint, forward_ton_amount: bigint, total_ton_amount: bigint, query_id: number | bigint = 0) {
-        const mintMsg = beginCell().storeUint(Op.internal_transfer, 32)
+        const mintMsg = beginCell()
+            .storeUint(Op.internal_transfer, 32)
             .storeUint(0, 64)
             .storeCoins(jetton_amount)
             .storeAddress(null)
@@ -105,21 +105,10 @@ export class JettonMinterMarket implements Contract {
             .endCell();
     }
 
-    async sendMint(provider: ContractProvider, via: Sender, to: Address, jetton_amount: bigint, forward_ton_amount: bigint, total_ton_amount: bigint) {
-        if (total_ton_amount <= forward_ton_amount) {
-            throw new Error("Total ton amount should be > forward amount");
-        }
-        await provider.internal(via, {
-            sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: JettonMinterMarket.mintMessage(this.address, to, jetton_amount, forward_ton_amount, total_ton_amount),
-            value: total_ton_amount + toNano('0.015'),
-        });
-    }
-
     /* provide_wallet_address#2c76b973 query_id:uint64 owner_address:MsgAddress include_address:Bool = InternalMsgBody;
     */
     static discoveryMessage(owner: Address, include_address: boolean) {
-        return beginCell().storeUint(0x2c76b973, 32).storeUint(0, 64) // op, queryId
+        return beginCell().storeUint(Op.provide_wallet_address, 32).storeUint(0, 64) // op, queryId
             .storeAddress(owner).storeBit(include_address)
             .endCell();
     }
@@ -128,6 +117,22 @@ export class JettonMinterMarket implements Contract {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: JettonMinterMarket.discoveryMessage(owner, include_address),
+            value: value,
+        });
+    }
+
+    static withdrawFeesMessage(owner: Address) {
+        return beginCell()
+            .storeUint(Op.withdraw_fees, 32) // op
+            .storeUint(0, 64) // query id
+            .storeAddress(owner)
+            .endCell();
+    }
+
+    async sendWithdrawFees(provider: ContractProvider, via: Sender, owner: Address, value: bigint = toNano('0.1')) {
+        await provider.internal(via, {
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: JettonMinterMarket.withdrawFeesMessage(owner),
             value: value,
         });
     }

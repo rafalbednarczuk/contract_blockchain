@@ -5,7 +5,9 @@ export abstract class Op {
     static excesses = 0xd53276db;
     static burn = 0x595f07bc;
     static burn_notification = 0x7bdd97de;
-    
+    static buy_coins = 0x23bafc01;
+    static withdraw_fees = 0x1f7eabd8;
+
     static provide_wallet_address = 0x2c76b973;
     static take_wallet_address = 0xd1735400;
     static mint = 21;
@@ -27,4 +29,22 @@ export abstract class Errors {
     static balance_error   = 706;
 }
 
+// Define type for operation codes
+export type OpCode = number;
 
+// Operation codes mapping with proper typing
+export const OpNames: Record<OpCode, string> = {
+    0xf8a7ea5: 'transfer',
+    0x7362d09c: 'transfer_notification',
+    0x178d4519: 'internal_transfer',
+    0xd53276db: 'excesses',
+    0x595f07bc: 'burn',
+    0x7bdd97de: 'burn_notification',
+    0x23bafc01: 'buy_coins',
+    0x1f7eabd8: 'withdraw_fees',
+    0x2c76b973: 'provide_wallet_address',
+    0xd1735400: 'take_wallet_address',
+    21: 'mint',
+    3: 'change_admin',
+    4: 'change_content'
+};

@@ -1,5 +1,6 @@
 #include "imports/stdlib.fc";
 #include "imports/bonding-curve-utils.fc";
+#include "imports/jetton-utils.fc";
 
 
 ;; f(J) = 0.0005T +  0.000000003 * J * 1T ;; T == 1 TON; J == 1 Jetton
@@ -55,5 +56,12 @@
     ~dump(204);
     int ton_amount = bc::calculate_ton_amount_for_sold_jetton(jetton_amount, jetton_amount);
     ~dump(ton_amount);
+    int prev = bc::calculate_bought_jetton_amount_for_ton(0, 200 * one_ton());
+    int jetton_amount = bc::calculate_ton_amount_for_sold_jetton(prev, 2000 * one_jetton());
+    ~dump(jetton_amount);
+
+    ~dump(300);
+
+
     return ();
 }

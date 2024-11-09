@@ -7,7 +7,7 @@ import {JettonMinterMarket} from "../wrappers/JettonMinterMarket";
 
 let minterContract: OpenedContract<JettonMinterMarket>;
 
-const actions = ['Buy Jettons'];
+const actions = ['Buy Jettons', "Withdraw fees"];
 
 
 const buyJettons = async (provider: NetworkProvider, ui: UIProvider) => {
@@ -32,6 +32,24 @@ const buyJettons = async (provider: NetworkProvider, ui: UIProvider) => {
     const res = await minterContract.sendBuy(sender,
         toNano(tonAmount),
         0n
+    );
+    const gotTrans = await waitForTransaction(provider,
+        minterContract.address,
+        curState.lastTransaction.lt,
+        10);
+}
+
+const withdrawFunds = async (provider: NetworkProvider, ui: UIProvider) => {
+    const sender = provider.sender();
+    let retry: boolean;
+
+    const curState = await (provider.api() as TonClient).getContractState(minterContract.address);
+
+    if (curState.lastTransaction === null)
+        throw ("Last transaction can't be null on deployed contract");
+
+    const res = await minterContract.sendWithdrawFees(sender,
+        sender.address!,
     );
     const gotTrans = await waitForTransaction(provider,
         minterContract.address,
@@ -74,6 +92,8 @@ export async function run(provider: NetworkProvider) {
         switch (action) {
             case 'Buy Jettons':
                 await buyJettons(provider, ui);
+            case 'Withdraw fees':
+                await withdrawFunds(provider, ui);
                 break;
         }
     } while (!done);
