@@ -37,11 +37,9 @@ int bc::calculate_volume_in_grams(int jettons_nano) {
 int bc::calculate_jetton_amount_from_zero(int ton_amount_nano) {
     int jetton = one_jetton();
 
-    ;; Constants for the quadratic equation: aJ^2 + bJ + c = 0
-    ;; where J is the number of jettons to be purchased
-    int a = 3; ;; 2 * 1.5e-9 * 10^9 (scaled up by 10^9)
-    int b = 1000000; ;; 0.0005 * 2 * 10^9 (scaled up by 10^9)
-    int c = -2 * ton_amount_nano; ;; -2 * V (negative because we moved it to the other side of the equation)
+    int a = 3;
+    int b = 1000000;
+    int c = -2 * ton_amount_nano;
 
     ;; Calculate discriminant
     int discriminant = b * b - 4 * a * c;

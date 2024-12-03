@@ -13,6 +13,10 @@ export abstract class Op {
     static mint = 21;
     static change_admin = 3;
     static change_content = 4;
+
+    static ston_provide_lp = 0x37c096df;
+    static pton_transfer_ton = 0x01f3835d;
+
 }
 
 export abstract class Errors {
