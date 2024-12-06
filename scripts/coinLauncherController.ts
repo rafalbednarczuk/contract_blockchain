@@ -1,9 +1,9 @@
 import {Address, Cell, OpenedContract, toNano} from '@ton/core';
 import {compile, NetworkProvider, UIProvider} from '@ton/blueprint';
-import {jettonContentToCell, JettonMinterBC} from '../wrappers/JettonMinterBC';
 import {promptAddress, promptAmount, promptBool, promptUrl, waitForTransaction} from '../wrappers/ui-utils';
 import {TonClient} from "@ton/ton";
 import {CoinLauncher} from "../wrappers/CoinLauncher";
+import {jettonContentToCell} from "../wrappers/JettonMinterMarketStonfi";
 
 let coinLauncherContract: OpenedContract<CoinLauncher>;
 
@@ -36,7 +36,7 @@ const launchJetton = async (provider: NetworkProvider, ui: UIProvider) => {
 
     const res = await coinLauncherContract.sendLaunchJetton(sender,
         content,
-        toNano("0.2")
+        toNano("0.101")
     );
     const gotTrans = await waitForTransaction(provider,
         coinLauncherContract.address,

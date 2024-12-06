@@ -1,0 +1,140 @@
+;; include to have good IDE support
+
+#include "imports/stdlib.fc";
+#include "imports/params.fc";
+
+
+int minimum_mint_value()  asm "100000000 PUSHINT"; ;; 0.1 TON
+int min_tons_for_storage() asm "10000000 PUSHINT"; ;; 0.01 TON
+
+;; storage scheme
+;; storage#_ total_supply:Coins admin_address:MsgAddress content:^Cell jetton_wallet_code:^Cell = Storage;
+
+(cell, cell, slice, slice, slice) load_data() inline {
+    slice ds = get_data().begin_parse();
+    return (
+        ds~load_ref(), ;; minter_code
+        ds~load_ref(), ;; jetton_wallet_code
+        ds~load_msg_addr(), ;; admin_address
+        ds~load_msg_addr(), ;; router_address
+        ds~load_msg_addr() ;; router_pton_wallet_address
+    );
+}
+
+() save_data(cell minter_code, cell jetton_wallet_code, slice admin_address, slice router_address, slice router_pton_wallet_address) impure inline {
+    set_data(begin_cell()
+        .store_ref(minter_code)
+        .store_ref(jetton_wallet_code)
+        .store_slice(admin_address)
+        .store_slice(router_address)
+        .store_slice(router_pton_wallet_address)
+        .end_cell()
+    );
+}
+
+
+
+cell pack_minter_data(cell content, cell jetton_wallet_code, slice admin_address, slice router_address, slice router_pton_wallet_address) inline {
+    return begin_cell()
+        .store_coins(0) ;; initial total_supply
+        .store_slice(admin_address) ;; admin_address
+        .store_ref(content) ;; content
+        .store_ref(jetton_wallet_code) ;; jetton wallet code
+        .store_uint(0, 1) ;; bc_reached == false
+        .store_slice(router_address)
+        .store_slice(router_pton_wallet_address)
+        .end_cell();
+}
+
+cell calculate_minter_state_init(cell jetton_wallet_code, cell minter_code, cell content, slice admin_address, slice router_address, slice router_pton_wallet_address) inline {
+    return begin_cell()
+        .store_uint(0, 2)
+        .store_dict(minter_code)
+        .store_dict(pack_minter_data(content, jetton_wallet_code, admin_address, router_address, router_pton_wallet_address))
+        .store_uint(0, 1)
+        .end_cell();
+}
+
+slice calculate_minter_address(cell state_init) inline {
+    return begin_cell().store_uint(4, 3)
+        .store_int(workchain(), 8)
+        .store_uint(cell_hash(state_init), 256)
+        .end_cell()
+        .begin_parse();
+}
+
+
+
+
+() recv_internal(int msg_value, cell in_msg_full, slice in_msg_body) impure {
+    (cell minter_code, cell jetton_wallet_code, slice admin_address, slice router_address, slice router_pton_wallet_address) = load_data();
+    slice cs = in_msg_full.begin_parse();
+    int flags = cs~load_uint(4);
+    slice sender_address = cs~load_msg_addr();
+
+    if (in_msg_body.slice_empty?()) {
+        ;; ignore empty messages if already deployed
+        return ();
+    }
+
+    if (flags & 1) {
+        ;; ignore all bounced messages
+        return ();
+    }
+    cs~load_msg_addr(); ;; skip dst
+    cs~load_coins(); ;; skip value
+    cs~skip_bits(1); ;; skip extracurrency collection
+    cs~load_coins(); ;; skip ihr_fee
+
+    int op = in_msg_body~load_uint(32);
+
+    if (op == 1) {
+        throw_unless(806, msg_value >= minimum_mint_value());
+        cell content = in_msg_body~load_ref();
+        cell state_init = calculate_minter_state_init(jetton_wallet_code, minter_code, content, admin_address, router_address, router_pton_wallet_address);
+        slice minter_address = calculate_minter_address(state_init);
+        var msg = begin_cell()
+            .store_uint(0x18, 6)
+            .store_slice(minter_address)
+            .store_coins(muldiv(minimum_mint_value(), 9, 10))
+            .store_uint(4 + 2 + 1, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 1)
+            .store_ref(state_init);
+        send_raw_message(msg.end_cell(), 1);
+
+        return ();
+    }
+
+    ;; change admin
+    if (op == 3) {
+        throw_unless(73, equal_slice_bits(sender_address, admin_address));
+        slice new_admin_address = in_msg_body~load_msg_addr();
+        save_data(minter_code, jetton_wallet_code, new_admin_address, router_address, router_pton_wallet_address);
+        return ();
+    }
+
+    ;; change stonfi router and pton wallet address
+    if (op == 4) {
+        throw_unless(73, equal_slice_bits(sender_address, admin_address));
+        slice new_router_address = in_msg_body~load_msg_addr();
+        slice new_router_pton_wallet_address = in_msg_body~load_msg_addr();
+        save_data(minter_code, jetton_wallet_code, admin_address, new_router_address, new_router_pton_wallet_address);
+        return ();
+    }
+
+    ;; withdraw fees
+    if (op == 5) {
+        throw_unless(73, equal_slice_bits(sender_address, admin_address));
+        raw_reserve(min_tons_for_storage(), 2);
+
+        var msg = begin_cell()
+            .store_uint(0x10, 6) ;; nobounce - int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool src:MsgAddress -> 010000
+            .store_slice(admin_address)
+            .store_coins(0)
+            .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
+            send_raw_message(msg.end_cell(), 128 + 2);
+    }
+
+
+    throw(0xffff);
+}
+

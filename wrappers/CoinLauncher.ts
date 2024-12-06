@@ -20,19 +20,21 @@ export type CoinToLaunchContent = {
     uri: string
 };
 
-export type CoinLauncherConfig = { minter_code: Cell; wallet_code: Cell };
+export type CoinLauncherConfig = {
+    minter_code: Cell;
+    wallet_code: Cell;
+    admin_address: Address,
+    router_address: Address,
+    router_pton_wallet_address: Address
+};
 
 export function CoinLauncherConfigToCell(config: CoinLauncherConfig): Cell {
     return beginCell()
         .storeRef(config.minter_code)
         .storeRef(config.wallet_code)
-        .endCell();
-}
-
-export function jettonContentToCell(content: CoinToLaunchContent) {
-    return beginCell()
-        .storeUint(content.type, 8)
-        .storeStringTail(content.uri) //Snake logic under the hood
+        .storeAddress(config.admin_address)
+        .storeAddress(config.router_address)
+        .storeAddress(config.router_pton_wallet_address)
         .endCell();
 }
 
