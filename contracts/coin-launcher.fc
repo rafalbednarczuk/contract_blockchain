@@ -98,7 +98,8 @@ slice calculate_minter_address(cell state_init) inline {
             .store_slice(minter_address)
             .store_coins(muldiv(minimum_mint_value(), 9, 10))
             .store_uint(4 + 2 + 1, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 1)
-            .store_ref(state_init);
+            .store_ref(state_init)
+            .store_ref(begin_cell().end_cell());
         send_raw_message(msg.end_cell(), 1);
 
         return ();
@@ -131,7 +132,7 @@ slice calculate_minter_address(cell state_init) inline {
             .store_slice(admin_address)
             .store_coins(0)
             .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
-            send_raw_message(msg.end_cell(), 128 + 2);
+        send_raw_message(msg.end_cell(), 128 + 2);
     }
 
 
