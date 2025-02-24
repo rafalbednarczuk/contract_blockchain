@@ -77,11 +77,11 @@ async function createContentCell(): Promise<Cell> {
 
     // Metadata key-value pairs
     const metadata = {
-        name: "DANCE",
-        description: dancingStickManV0,
-        symbol: "DANCE",
+        name: "Bonding Curve hit",
+        description: "Bonding Curve hit",
+        symbol: "BC",
         decimals: "9",
-        image: "https://appincoin.fun/dancer_icon.jpg",
+        image: "https://cdn-images-1.medium.com/v2/resize:fit:1600/1*n8acuM7F7YmIKwZxpaZT4A.jpeg",
         render_type: "currency",   // Added since it's a game
         amount_style: "n"      // Default number style
     };

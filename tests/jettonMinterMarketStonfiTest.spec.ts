@@ -1,26 +1,26 @@
-import {Address, beginCell, Cell, contractAddress, fromNano, toNano} from "@ton/core";
-import {Blockchain, BlockchainTransaction, SandboxContract, TreasuryContract} from "@ton/sandbox";
-import "@ton/test-utils";
-import {compile} from "@ton/blueprint";
-import {JettonMinterMarketStonfi} from "../wrappers/JettonMinterMarketStonfi";
-import {JettonWallet} from "../wrappers/JettonWallet";
-import {flattenTransaction} from "@ton/test-utils";
-import {Op, OpNames} from "../wrappers/JettonConstants";
-import {verify} from "node:crypto";
+import { Address, beginCell, Cell, contractAddress, fromNano, toNano } from '@ton/core';
+import { Blockchain, BlockchainTransaction, SandboxContract, TreasuryContract } from '@ton/sandbox';
+import '@ton/test-utils';
+import { compile } from '@ton/blueprint';
+import { JettonMinterMarketStonfi } from '../wrappers/JettonMinterMarketStonfi';
+import { JettonWallet } from '../wrappers/JettonWallet';
+import { flattenTransaction } from '@ton/test-utils';
+import { Op, OpNames } from '../wrappers/JettonConstants';
+import { verify } from 'node:crypto';
 
 
-describe("jetton-minter-market-stonfi.fc contract tests", () => {
+describe('jetton-minter-market-stonfi.fc contract tests', () => {
     let blockchain: Blockchain;
     let masterAddress: SandboxContract<TreasuryContract>;
     let minterContract: SandboxContract<JettonMinterMarketStonfi>;
     let trader: SandboxContract<TreasuryContract>;
     let traderJettonWallet: SandboxContract<JettonWallet>;
-    let codeCell: Cell
+    let codeCell: Cell;
     let jettonContractGetter: (address: Address) => Promise<SandboxContract<JettonWallet>>;
-    let jettonWalletCode: Cell
+    let jettonWalletCode: Cell;
     const initialMasterBalance = toNano(10);
-    const routerAddress = Address.parse("EQByADL5Ra2dldrMSBctgfSm2X2W1P61NVW2RYDb8eJNJGx6");
-    const routerPTonWalletAddress = Address.parse("EQBzIe_KYGrezmSS3ua9buM0P8vzEnMFDrsv1prFnwP43hFk");
+    const routerAddress = Address.parse('EQByADL5Ra2dldrMSBctgfSm2X2W1P61NVW2RYDb8eJNJGx6');
+    const routerPTonWalletAddress = Address.parse('EQBzIe_KYGrezmSS3ua9buM0P8vzEnMFDrsv1prFnwP43hFk');
 
     // Helper function to get friendly name for an address
     const
@@ -41,9 +41,9 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
     };
 
     beforeAll(async () => {
-        codeCell = await compile("JettonMinterMarketStonfi")
+        codeCell = await compile('JettonMinterMarketStonfi');
         blockchain = await Blockchain.create();
-        jettonWalletCode = await compile("JettonWallet");
+        jettonWalletCode = await compile('JettonWallet');
 
         jettonContractGetter = async (address: Address) => blockchain.openContract<JettonWallet>(
             JettonWallet.createFromAddress(
@@ -74,18 +74,18 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
                     content: beginCell().endCell(),
                     wallet_code: jettonWalletCode,
                     router_address: routerAddress,
-                    router_pton_wallet_address: routerPTonWalletAddress,
+                    router_pton_wallet_address: routerPTonWalletAddress
                 },
-                codeCell,
+                codeCell
             )
         );
         await minterContract.sendDeploy(masterAddress.getSender(), initialMasterBalance);
 
     });
 
-    it("should successfully buy tokens", async () => {
+    it('should successfully buy tokens', async () => {
         // Create a buyer wallet
-        const buyer = await blockchain.treasury("buyer");
+        const buyer = await blockchain.treasury('buyer');
 
         // Initial balance check
         const buyerJettonWallet = await jettonContractGetter(buyer.address);
@@ -95,7 +95,7 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         // Send buy transaction with 1 TON
         const result = await minterContract.sendBuy(
             buyer.getSender(),
-            toNano("1"), // value to send
+            toNano('1'), // value to send
             0n          // query_id
         );
 
@@ -103,14 +103,14 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         expect(result.transactions).toHaveTransaction({
             from: buyer.address,
             to: minterContract.address,
-            success: true,
+            success: true
         });
 
         // Find the transaction that sends TON to the contract
         const buyTx = result.transactions.find(tx =>
             tx.inMessage?.info.type === 'internal' &&
             tx.inMessage.info.dest?.equals(minterContract.address) &&
-            tx.inMessage.info.value.coins === toNano("1")
+            tx.inMessage.info.value.coins === toNano('1')
         );
         expect(buyTx).toBeTruthy();
 
@@ -123,15 +123,15 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         expect(totalSupply).toBeGreaterThan(0n);
     });
 
-    it("should perform multiple buy/sell cycles and accumulate fees", async () => {
-        trader = await blockchain.treasury("trader");
+    it('should perform multiple buy/sell cycles and accumulate fees', async () => {
+        trader = await blockchain.treasury('trader');
         traderJettonWallet = await jettonContractGetter(trader.address);
 
 
         for (let i = 0; i < 100; i++) {
             const buyResults = await minterContract.sendBuy(
                 trader.getSender(),
-                toNano("1"),
+                toNano('1'),
                 BigInt(i)
             );
 
@@ -147,7 +147,7 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
 
             const sellResults = await traderJettonWallet.sendSellJettons(
                 trader.getSender(),
-                toNano("0.1"),
+                toNano('0.1'),
                 balance,
                 minterContract.address
             );
@@ -179,7 +179,7 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         const withdrawResult = await minterContract.sendWithdrawFees(
             masterAddress.getSender(),
             masterAddress.address,
-            toNano("0.1")
+            toNano('0.1')
         );
 
         // Get final balances
@@ -198,15 +198,64 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         expect(withdrawnFees).toBeGreaterThan(0n);
     });
 
-    it("should perform multiple buys and sell all tokens in bulk", async () => {
-        trader = await blockchain.treasury("trader");
+    it('buy/sell fees check', async () => {
+        trader = await blockchain.treasury('trader');
+        traderJettonWallet = await jettonContractGetter(trader.address);
+
+        const traderInitialBalance = await trader.getBalance();
+        const minterInitialBalance = await minterContract.getTonBalance();
+
+        const buyResults = await minterContract.sendBuy(
+            trader.getSender(),
+            toNano('1'),
+            0n
+        );
+
+        buyResults.transactions.forEach((tx) => {
+            const flatTx = flattenTransaction(tx);
+            if (flatTx.op != Op.transfer_notification) {
+                expect(flatTx.success).toEqual(true);
+            }
+        });
+
+        const balance = await traderJettonWallet.getJettonBalance();
+        expect(balance).toBeGreaterThan(0n);
+
+        const sellResults = await traderJettonWallet.sendSellJettons(
+            trader.getSender(),
+            toNano('0.1'),
+            balance,
+            minterContract.address
+        );
+
+        sellResults.transactions.forEach((tx) => {
+            const flatTx = flattenTransaction(tx);
+            expect(flatTx.success).toEqual(true);
+        });
+
+        const jettonBalanceAfterSell = await traderJettonWallet.getJettonBalance();
+        expect(jettonBalanceAfterSell).toBe(0n);
+
+
+        const traderBalanceAfterBuyAndSale = await trader.getBalance();
+        const minterBalanceAfterBuyAndSale = await minterContract.getTonBalance();
+
+        console.log(`UserBalanceChange:${fromNano(traderInitialBalance - traderBalanceAfterBuyAndSale)}
+        ContractBalanceChange:${fromNano(minterBalanceAfterBuyAndSale - minterInitialBalance)}
+        Fees:${fromNano((traderInitialBalance - traderBalanceAfterBuyAndSale) - (minterBalanceAfterBuyAndSale - minterInitialBalance))}
+        `);
+
+    });
+
+    it('should perform multiple buys and sell all tokens in bulk', async () => {
+        trader = await blockchain.treasury('trader');
         traderJettonWallet = await jettonContractGetter(trader.address);
 
         // Perform 100 buy operations
         for (let i = 0; i < 100; i++) {
             const buyResults = await minterContract.sendBuy(
                 trader.getSender(),
-                toNano("1"),
+                toNano('1'),
                 BigInt(i)
             );
 
@@ -229,7 +278,7 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         // Sell all tokens in one transaction
         const sellResults = await traderJettonWallet.sendSellJettons(
             trader.getSender(),
-            toNano("0.1"),
+            toNano('0.1'),
             totalBalance,
             minterContract.address
         );
@@ -250,7 +299,7 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         const withdrawResult = await minterContract.sendWithdrawFees(
             masterAddress.getSender(),
             masterAddress.address,
-            toNano("0.1")
+            toNano('0.1')
         );
 
         // Get final balances and calculate withdrawn fees
@@ -262,14 +311,14 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         expect(withdrawnFees).toBeGreaterThan(0n);
     });
 
-    it("should buy tokens in bulk and perform split selling", async () => {
-        trader = await blockchain.treasury("trader");
+    it('should buy tokens in bulk and perform split selling', async () => {
+        trader = await blockchain.treasury('trader');
         traderJettonWallet = await jettonContractGetter(trader.address);
 
         // Make one large purchase of 100 TON
         const buyResults = await minterContract.sendBuy(
             trader.getSender(),
-            toNano("100"),
+            toNano('100'),
             0n
         );
 
@@ -294,7 +343,7 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         for (let i = 0; i < 100; i++) {
             const sellResults = await traderJettonWallet.sendSellJettons(
                 trader.getSender(),
-                toNano("0.1"),
+                toNano('0.1'),
                 sellAmount,
                 minterContract.address
             );
@@ -321,7 +370,7 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         const withdrawResult = await minterContract.sendWithdrawFees(
             masterAddress.getSender(),
             masterAddress.address,
-            toNano("0.1")
+            toNano('0.1')
         );
 
         // Get final balances and calculate withdrawn fees
@@ -333,12 +382,12 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         expect(withdrawnFees).toBeGreaterThan(0n);
     });
 
-    it("should handle large scale buy and sell operation", async () => {
-        trader = await blockchain.treasury("trader");
+    it('should handle large scale buy and sell operation', async () => {
+        trader = await blockchain.treasury('trader');
         traderJettonWallet = await jettonContractGetter(trader.address);
 
         // Make one very large purchase of 1500 TON
-        const buyAmount = toNano("1500");
+        const buyAmount = toNano('1500');
         console.log(`Buying jettons for ${fromNano(buyAmount)} TON`);
 
         const buyResults = await minterContract.sendBuy(
@@ -371,7 +420,7 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         // Sell all tokens in one transaction
         const sellResults = await traderJettonWallet.sendSellJettons(
             trader.getSender(),
-            toNano("0.1"),
+            toNano('0.1'),
             totalBalance,
             minterContract.address
         );
@@ -400,7 +449,7 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         const withdrawResult = await minterContract.sendWithdrawFees(
             masterAddress.getSender(),
             masterAddress.address,
-            toNano("0.1")
+            toNano('0.1')
         );
 
         // Get final balances and calculate withdrawn fees
@@ -416,12 +465,12 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         expect(tonReceived).toBeGreaterThan(0n); // Should receive some TON back
     });
 
-    it("should not lock contract at 2000 TON", async () => {
-        trader = await blockchain.treasury("trader");
+    it('should not lock contract at 2000 TON', async () => {
+        trader = await blockchain.treasury('trader');
         traderJettonWallet = await jettonContractGetter(trader.address);
 
         // Make one very large purchase of 1500 TON
-        const buyAmount = toNano("2000");
+        const buyAmount = toNano('2000');
         console.log(`Buying jettons for ${fromNano(buyAmount)} TON`);
 
         const buyResults = await minterContract.sendBuy(
@@ -454,7 +503,7 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         // Sell all tokens in one transaction
         const sellResults = await traderJettonWallet.sendSellJettons(
             trader.getSender(),
-            toNano("0.1"),
+            toNano('0.1'),
             totalBalance,
             minterContract.address
         );
@@ -483,7 +532,7 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         const withdrawResult = await minterContract.sendWithdrawFees(
             masterAddress.getSender(),
             masterAddress.address,
-            toNano("0.1")
+            toNano('0.1')
         );
 
         // Get final balances and calculate withdrawn fees
@@ -499,12 +548,12 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         expect(tonReceived).toBeGreaterThan(0n); // Should receive some TON back
     });
 
-    it("should lock contract at 2050 TON", async () => {
-        trader = await blockchain.treasury("trader");
+    it('should lock contract at 2050 TON', async () => {
+        trader = await blockchain.treasury('trader');
         traderJettonWallet = await jettonContractGetter(trader.address);
 
         // Make one very large purchase of 1500 TON
-        const buyAmount = toNano("2050");
+        const buyAmount = toNano('2050');
         console.log(`Buying jettons for ${fromNano(buyAmount)} TON`);
 
         const buyResults = await minterContract.sendBuy(
@@ -546,7 +595,7 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         // Sell all tokens in one transaction
         const sellResults = await traderJettonWallet.sendSellJettons(
             trader.getSender(),
-            toNano("0.1"),
+            toNano('0.1'),
             totalBalance,
             minterContract.address
         );
@@ -571,7 +620,7 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
             if (flatTx.op == Op.buy_coins) {
                 expect(flatTx.success).toEqual(false);
             }
-        })
+        });
 
         // Verify jettons aren't sold
         const balanceAfterSell = await traderJettonWallet.getJettonBalance();
@@ -594,7 +643,7 @@ describe("jetton-minter-market-stonfi.fc contract tests", () => {
         const withdrawResult = await minterContract.sendWithdrawFees(
             masterAddress.getSender(),
             masterAddress.address,
-            toNano("0.1")
+            toNano('0.1')
         );
 
         expect(tonReceived).toBeLessThan(0n); // Should be less than 0 due to fees

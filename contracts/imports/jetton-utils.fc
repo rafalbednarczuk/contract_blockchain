@@ -1,7 +1,5 @@
 #include "stdlib.fc";
-#include "op-codes.fc";
 #include "params.fc";
-#include "discovery-params.fc";
 
 cell pack_jetton_wallet_data(int balance, slice owner_address, slice jetton_master_address, cell jetton_wallet_code) inline {
    return  begin_cell()

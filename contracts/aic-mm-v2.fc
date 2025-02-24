@@ -1,0 +1,164 @@
+;; include to have good IDE support
+
+#include "./imports/stdlib.fc";
+#include "./imports/op-codesv2.fc";
+#include "./imports/bonding-curve-v2-utils.fc";
+
+(int, int, cell) load_data() inline {
+    slice ds = get_data().begin_parse();
+    return (
+        ds~load_uint(1), ;; bc reached
+        ds~load_coins(), ;; total_supply
+        ds~load_dict()  ;; holders_map
+    );
+}
+
+() save_data(int bc_reached, int total_supply, cell holders_map) impure inline {
+    set_data(begin_cell()
+        .store_uint(bc_reached, 1)
+        .store_coins(total_supply)
+        .store_dict(holders_map)
+        .end_cell()
+    );
+}
+
+() recv_internal(int msg_value, cell in_msg_full, slice in_msg_body) impure {
+    ;; TODO: implement initial pruchase by the dev
+    if (in_msg_body.slice_empty?()) {
+        ;; ignore empty messages
+        return ();
+    }
+    slice cs = in_msg_full.begin_parse();
+    ;; //TODO: handle (?)
+    int flags = cs~load_uint(4);
+    if (flags & 1) {
+        ;; //TODO: (accept some bounced messages?)
+        ;; ignore all bounced messages
+        return ();
+    }
+    slice sender_address = cs~load_msg_addr();
+
+    int op = in_msg_body~load_uint(32);
+    int query_id = in_msg_body~load_uint(64);
+    (int bc_reached, int total_supply, cell holders_map) = load_data();
+
+    if (op == op_const::buy_coins) {
+        throw_if(199, bc_reached);
+        int jettons_amount_requested = in_msg_body~load_coins();
+        int max_ton_requested = in_msg_body~load_coins();
+        int msg_value_minus_fees = msg_value;
+        ;;//TODO:(?) whitelist addresses for fee subtraction
+        ;; 0.5% fee
+        msg_value_minus_fees = muldiv(msg_value_minus_fees, 995, 1000);
+        ;;//TODO:(?) calculate in the end
+        ;;//it's different if it's a new buy or already bought
+        ;;//Also, it's probably different depending on map size
+        int gas_consumed_for_buy = 6757;
+        int gas_cost = get_gas_fee(gas_consumed_for_buy, 0);
+        msg_value_minus_fees -= gas_cost;
+        int tons_for_requested_jettons = bc::calculate_ton_amount_for_bought_jetton(total_supply, jettons_amount_requested);
+        throw_if(201, (tons_for_requested_jettons > msg_value_minus_fees) | (tons_for_requested_jettons > max_ton_requested));
+
+        int return_value = msg_value_minus_fees - tons_for_requested_jettons;
+        int sender_address_hash = slice_hash(sender_address);
+        (slice current_jettons_balance_slice, int exists) = holders_map.udict_get?(256, sender_address_hash);
+        int new_jetton_balance = 0;
+        if (exists) {
+            int current_jetton_balance = current_jettons_balance_slice~load_coins();
+            new_jetton_balance = current_jetton_balance + jettons_amount_requested;
+        } else {
+            new_jetton_balance = jettons_amount_requested;
+        }
+        holders_map~udict_set(256, sender_address_hash, begin_cell().store_coins(new_jetton_balance).end_cell().begin_parse());
+        total_supply += jettons_amount_requested;
+        save_data(bc_reached, total_supply, holders_map);
+        var msg = begin_cell()
+            .store_uint(0x10, 6) ;; nobounce - int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool src:MsgAddress -> 011000
+            .store_slice(sender_address)
+            .store_coins(return_value)
+            .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+            .store_uint(op_const::excesses, 32)
+            .store_uint(query_id, 64);
+        send_raw_message(msg.end_cell(), 0);
+        ;;GAS_CONSUMED_CHECKER
+        ;;REMOVE LATER
+        ;; int gas_consumed_so_far = gas_consumed();
+        ;; int gas_cost = get_gas_fee(gas_consumed_so_far, 0);
+        ;; ~dump(875);
+        ;; ~dump(gas_consumed_so_far);
+        ;; ~dump(gas_cost);
+        return ();
+    }
+
+    if (op == op_const::sell_coins) {
+        throw_if(199, bc_reached);
+        int jettons_amount_to_sell = in_msg_body~load_coins();
+        int min_ton_requested = in_msg_body~load_coins();
+        int msg_value_minus_fees = msg_value;
+        ;;//TODO:(?) calculate in the end, it's different if it's a partial and not partial sale
+        ;;//Also, it's probably different depending on map size
+        int gas_consumed_for_sell = 6105;
+        int gas_cost = get_gas_fee(gas_consumed_for_sell, 0);
+        msg_value_minus_fees -= gas_cost;
+
+        int sender_address_hash = slice_hash(sender_address);
+        (slice current_jettons_balance_slice, int exists) = holders_map.udict_get?(256, sender_address_hash);
+        throw_unless(202, exists);
+        int current_jetton_balance = current_jettons_balance_slice~load_coins();
+        throw_if(203, current_jetton_balance < jettons_amount_to_sell);
+        int tons_for_sold_jettons = bc::calculate_ton_amount_for_sold_jetton(total_supply, jettons_amount_to_sell);
+        ;;//TODO:(?) whitelist addresses for fee subtraction
+        ;; 0.5% fee
+        tons_for_sold_jettons = muldiv(tons_for_sold_jettons, 995, 1000);
+        throw_if(204, tons_for_sold_jettons < min_ton_requested);
+        int return_value = msg_value_minus_fees + tons_for_sold_jettons;
+        current_jetton_balance -= jettons_amount_to_sell;
+        if (current_jetton_balance) {
+            holders_map~udict_set(256, sender_address_hash, begin_cell().store_coins(current_jetton_balance).end_cell().begin_parse());
+        } else {
+            holders_map~udict_delete?(256, sender_address_hash);
+        }
+        total_supply -= jettons_amount_to_sell;
+        save_data(bc_reached, total_supply, holders_map);
+        var msg = begin_cell()
+            .store_uint(0x10, 6) ;; nobounce - int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool src:MsgAddress -> 011000
+            .store_slice(sender_address)
+            .store_coins(return_value)
+            .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+            .store_uint(op_const::excesses, 32)
+            .store_uint(query_id, 64);
+        send_raw_message(msg.end_cell(), 0);
+        ;;GAS_CONSUMED_CHECKER
+        ;;REMOVE LATER
+        int gas_consumed_so_far = gas_consumed();
+        int gas_cost = get_gas_fee(gas_consumed_so_far, 0);
+        ~dump(900);
+        ~dump(gas_consumed_so_far);
+        ~dump(gas_cost);
+        return ();
+    }
+
+
+    throw(0xffff);
+}
+
+int get_memecoins_balance(slice owner_address) method_id {
+    (int bc_reached, int total_supply, cell holders_map) = load_data();
+    int owner_address_hash = slice_hash(owner_address);
+    (slice current_jettons_balance_slice, int exists) = holders_map.udict_get?(256, owner_address_hash);
+    if (exists) {
+        int current_jetton_balance = current_jettons_balance_slice~load_coins();
+        return current_jetton_balance;
+    }
+    return 0;
+}
+
+int get_ton_balance() method_id {
+    [int balance, cell other_currencies] = get_balance();
+    return balance;
+}
+
+
+
+
+

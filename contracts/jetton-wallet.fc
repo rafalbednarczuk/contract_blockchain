@@ -125,7 +125,6 @@ int gas_consumption() asm "15000000 PUSHINT"; ;; 0.015 TON
     );
     int forward_ton_amount = in_msg_body~load_coins();
 
-    int ton_balance_before_msg = my_ton_balance - msg_value;
     if (forward_ton_amount) {
         slice either_forward_payload = in_msg_body;
 
@@ -148,7 +147,7 @@ int gas_consumption() asm "15000000 PUSHINT"; ;; 0.015 TON
     }
 
     if ((response_address.preload_uint(2) != 0)) {
-        raw_reserve(max(ton_balance_before_msg, min_tons_for_storage()), 2);
+        raw_reserve(min_tons_for_storage(), 2);
 
         var msg = begin_cell()
             .store_uint(0x10, 6) ;; nobounce - int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool src:MsgAddress -> 010000

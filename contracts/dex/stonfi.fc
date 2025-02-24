@@ -1,5 +1,6 @@
 #include "../imports/stdlib.fc";
 #include "../imports/jetton-utils.fc";
+#include "../imports/op-codes.fc";
 
 const STON_PROVIDE_LP = 0x37c096df;
 const PTON_TRANSFER_TON = 0x01f3835d;

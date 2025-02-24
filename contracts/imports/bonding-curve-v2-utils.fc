@@ -1,0 +1,34 @@
+#include "stdlib.fc";
+
+;; f(J) = 0.0005T +  0.000000003 * J * 1T ;; T == 1 TON; J == 1 Jetton
+;; At 1 Million Jettons, Total is 2000 TON.
+;; Starting pirce is 0.0005T/Jetton, 1 Million Jetton price is 0.0035T/Jetton
+;; V(J) = 0.0005J * 1T + 0.5J * [f(J) - 0.0005]
+;; V stands for ton amount bought from 0 to J including.
+
+const one_ton = 1000000000;
+const one_jetton = 1000000000;
+
+int bc::calculate_price_in_grams_for_jetton(int jettons_nano) inline {
+    int ton = one_ton;
+    return ton / 2000 + jettons_nano * one_jetton / 333333333333333333;
+}
+
+;; V(J) = 0.0005J * 1T + 0.5J * [f(J) - 0.0005]
+int bc::calculate_volume_in_grams(int jettons_nano) inline {
+    int ton = one_ton;
+    return jettons_nano / 2000 + jettons_nano * (bc::calculate_price_in_grams_for_jetton(jettons_nano) - ton / 2000) / 2 / one_jetton;
+}
+
+
+int bc::calculate_ton_amount_for_sold_jetton(int total_jettons_sold_nano, int jettons_amount_nano) inline {
+    int current_volume = bc::calculate_volume_in_grams(total_jettons_sold_nano);
+    int volume_after_sell = bc::calculate_volume_in_grams(total_jettons_sold_nano - jettons_amount_nano);
+    return current_volume - volume_after_sell;
+}
+
+int bc::calculate_ton_amount_for_bought_jetton(int total_jettons_sold_nano, int jettons_amount_nano) inline {
+    int current_volume = bc::calculate_volume_in_grams(total_jettons_sold_nano);
+    int volume_after_purchase = bc::calculate_volume_in_grams(total_jettons_sold_nano + jettons_amount_nano);
+    return volume_after_purchase - current_volume;
+}

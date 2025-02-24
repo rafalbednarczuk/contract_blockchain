@@ -1,0 +1,15 @@
+;; standarized op codes respected by for example tonviewer.com
+;; example of jetton transaction https://tonviewer.com/transaction/8df6f2d3e12c44402061ae42096c54a014ba31236cd1e465a783c9619ad1b08d
+;; there is a graph with explained transactions
+const op_const::transfer  = 0xf8a7ea5;
+const op_const::transfer_notification = 0x7362d09c;
+const op_const::internal_transfer = 0x178d4519;
+const op_const::excesses = 0xd53276db;
+const op_const::burn = 0x595f07bc;
+const op_const::burn_notification = 0x7bdd97de;
+const op_const::buy_coins = 0x23bafc01;
+const op_const::sell_coins = 0x4cfa0ce7;
+const op_const::withdraw_fees = 0x1f7eabd8;
+
+;; Minter
+const op_const::mint = 21;

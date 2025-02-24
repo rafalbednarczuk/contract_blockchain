@@ -6,6 +6,7 @@ export abstract class Op {
     static burn = 0x595f07bc;
     static burn_notification = 0x7bdd97de;
     static buy_coins = 0x23bafc01;
+    static sell_coins = 0x4cfa0ce7;
     static withdraw_fees = 0x1f7eabd8;
 
     static provide_wallet_address = 0x2c76b973;
